@@ -99,6 +99,14 @@ export default function Home() {
           </div>
         </div>
       </main>
+      <a
+        href="https://github.com/jjchengart/cactus"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-4 right-4 text-metadata hover:text-black transition-colors"
+      >
+        github
+      </a>
     </div>
   );
 }

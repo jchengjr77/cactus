@@ -1,9 +1,85 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@/lib/auth/context'
 
 export default function Home() {
   const [isLogin, setIsLogin] = useState(true)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [signupSuccess, setSignupSuccess] = useState(false)
+
+  const { user, signIn, signUp, signOut } = useAuth()
+
+  // If user is authenticated, show a simple dashboard
+  if (user) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <main className="container mx-auto px-4 py-16">
+          <div className="max-w-md mx-auto text-center">
+            <h1 className="text-3xl text-header mb-4 text-brand">
+              welcome back
+            </h1>
+            <p className="text-body text-gray-600 mb-6">
+              logged in as {user.email}
+            </p>
+            <p className="text-metadata mb-8">
+              dashboard coming soon...
+            </p>
+            <button
+              onClick={() => signOut()}
+              className="bg-surface border border-border px-4 py-2 text-emphasis hover:bg-gray-200 transition-colors rounded-sm"
+            >
+              log out
+            </button>
+          </div>
+        </main>
+        <a
+          href="https://github.com/jchengjr77/cactus"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-4 right-4 text-metadata hover:text-black transition-colors"
+        >
+          github
+        </a>
+      </div>
+    )
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    if (!isLogin && password !== confirmPassword) {
+      setError('passwords do not match')
+      setLoading(false)
+      return
+    }
+
+    try {
+      const { error } = isLogin
+        ? await signIn(email, password)
+        : await signUp(email, password)
+
+      if (error) {
+        setError(error.message)
+      } else if (!isLogin) {
+        // Signup successful
+        setSignupSuccess(true)
+        setEmail('')
+        setPassword('')
+        setConfirmPassword('')
+      }
+    } catch (err) {
+      setError('an unexpected error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -18,7 +94,26 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="bg-surface border border-border p-6 rounded">
+          {signupSuccess && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700">
+              <h3 className="text-emphasis mb-2">check your email</h3>
+              <p className="text-body text-green-600">
+                We've sent you a confirmation link. Please confirm your email to log in.
+              </p>
+              <button
+                onClick={() => {
+                  setSignupSuccess(false)
+                  setIsLogin(true)
+                }}
+                className="mt-3 text-metadata hover:text-green-800 underline"
+              >
+                back to login
+              </button>
+            </div>
+          )}
+
+          {!signupSuccess && (
+            <div className="bg-surface border border-border p-6 rounded">
             <div className="flex mb-6 bg-gray-100 border border-border p-1 rounded-sm">
               <button
                 onClick={() => setIsLogin(true)}
@@ -42,7 +137,13 @@ export default function Home() {
               </button>
             </div>
 
-            <form className="space-y-4">
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-body">
+                {error}
+              </div>
+            )}
+
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="email" className="text-label block mb-1">
                   Email
@@ -50,8 +151,11 @@ export default function Home() {
                 <input
                   type="email"
                   id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-3 py-2 border border-border focus:outline-none focus:border-border-strong rounded-sm"
                   placeholder="you@example.com"
+                  required
                 />
               </div>
 
@@ -62,8 +166,11 @@ export default function Home() {
                 <input
                   type="password"
                   id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-3 py-2 border border-border focus:outline-none focus:border-border-strong rounded-sm"
                   placeholder="••••••••"
+                  required
                 />
               </div>
 
@@ -75,17 +182,21 @@ export default function Home() {
                   <input
                     type="password"
                     id="confirmPassword"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     className="w-full px-3 py-2 border border-border focus:outline-none focus:border-border-strong rounded-sm"
                     placeholder="••••••••"
+                    required
                   />
                 </div>
               )}
 
               <button
                 type="submit"
-                className="w-full bg-black text-white py-2 px-4 text-emphasis hover:bg-gray-800 transition-colors rounded-sm"
+                disabled={loading}
+                className="w-full bg-black text-white py-2 px-4 text-emphasis hover:bg-gray-800 transition-colors rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLogin ? 'log in' : 'sign up'}
+                {loading ? 'processing...' : (isLogin ? 'log in' : 'sign up')}
               </button>
             </form>
 
@@ -96,7 +207,8 @@ export default function Home() {
                 </a>
               </div>
             )}
-          </div>
+            </div>
+          )}
         </div>
       </main>
       <a

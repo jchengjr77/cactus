@@ -1,79 +1,57 @@
-# Cactus
+# cactus
 
-A modern web application built with Next.js 14, TypeScript, Tailwind CSS, and Supabase.
+**water your friendships.**
 
-## Features
+## what is this?
 
-- **Next.js 14** with App Router
-- **TypeScript** for type safety
-- **Tailwind CSS** with custom design system
-- **Supabase** integration for backend services
-- **Inter** font for body text
-- **JetBrains Mono** for monospace/data display
+Cactus will keep your friend group connected.
 
-## Getting Started
+Create a group. Invite your friends. Set an update cadence. Commit to a group stake. Have fun.
 
-### Prerequisites
+## who is this for?
 
-- Node.js 18+ and npm
-- A Supabase project (create one at [supabase.com](https://supabase.com))
+Long distance friendships and families, forgetful people, bad texters, the gc, the exclusive four-person gc, the ultra-exclusive three-person gc that that one person isn't in, coffee lovers, beli fanatics, dog owners, meme aficionados, the chill coworkers from your start class, gym buddies, the pilates and matcha crew, letterboxd demons, the ppl that wait 5hrs on the west side highway for a tennis court, the school group project, your jiujitsu open-mat enemies, the d&d party that always reschedules, Nathan Ang, etc.
 
-### Environment Variables
+If there are humans you care about, this is for you.
 
-Create a `.env.local` file in the root directory and add your Supabase credentials:
+## how does it work?
 
-```bash
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
+### groups
 
-### Installation
+You and your friends will create a **group**. You may be part of as many **groups** as you'd like, with as many different people as you like.
 
-1. Install dependencies:
-```bash
-npm install
-```
+Careful not to spread yourself too thin! More **groups** means more **updates** to share.
 
-2. Run the development server:
-```bash
-npm run dev
-```
+### updates
 
-3. Open [http://localhost:3000](http://localhost:3000) to see your application.
+Each **group** will have a cadence that **updates** are expected (e.g. daily, weekly, etc). Group members are expected to share at least one **update** within that cadence.
 
-## Project Structure
+An **update** can be literally anything. It could be a five-page tirade on tipping culture. It could be "back hurts from lifting, took tylenol." It could be "smh."
 
-```
-├── app/                 # Next.js App Router pages
-├── components/          # Reusable React components
-├── lib/                 # Utility functions and configurations
-│   └── supabase/        # Supabase client configurations
-├── supabase/
-│   └── migrations/      # Database migration files
-└── public/              # Static assets
-```
+Failure to post an **update** in a timely manner will result in you paying the **stake**.
 
-## Design System
+### stakes
 
-The application uses a minimal design system with:
+Each **group** will have a defined **stake** which is the penalty for missing an **update**. These come in different forms such as Coffee, Beer, Dinner, a brand-spanking-new PS5, or whatever else your group agrees to. **Stakes** are paid into the **group tab**.
 
-- **Colors**: White background (#FFFFFF), black text (#000000), light gray surface (#F8F8F8)
-- **Fonts**: Inter for body text, JetBrains Mono for monospace
-- **Shadows**: Minimal shadow system for subtle depth
+Example: JJ missed an update. His group's stake is a coffee, which is $5. That amount is charged to his credit card, and added to the group's tab.
 
-## Supabase Integration
+### tab
 
-The project includes pre-configured Supabase clients:
+All **stakes** collected from the **group** go into the **tab**. When the **tab** is settled, the entirety of the **tab** is distributed evenly amongst all group members.
 
-- `lib/supabase/client.ts` - For client-side components
-- `lib/supabase/server.ts` - For server-side components and API routes
+The **tab** can be settled at any time with a majority vote from the group members.
 
-## Development
+*Note: The tab is intended to help pay for an in-person group event of sorts, like a coffee run, a nice dinner,  party supplies, etc.*
 
-Edit `app/page.tsx` to modify the landing page. The page auto-updates as you edit the file.
+## why a cactus?
 
-## Learn More
+Cacti are able to go long stretches without water. They are sturdy, resilient to the elements, and long lasting. You can count on them living on year after year.
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [Supabase Documentation](https://supabase.com/docs)
+However, cacti will *eventually* die without water. Every so often, they need attention. They're low-maintenance, not no-maintenance. You probably see the parallels here...
+
+More importantly, they're bulbous and cutely shaped.
+
+## creds
+
+created by @jjchengart

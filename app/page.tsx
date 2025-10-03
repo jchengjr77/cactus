@@ -11,8 +11,11 @@ export default function Home() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [signupSuccess, setSignupSuccess] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetSuccess, setResetSuccess] = useState(false)
 
-  const { user, signIn, signUp, signOut } = useAuth()
+  const { user, signIn, signUp, signOut, resetPassword } = useAuth()
 
   // If user is authenticated, show a simple dashboard
   if (user) {
@@ -81,6 +84,27 @@ export default function Home() {
     }
   }
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const { error } = await resetPassword(resetEmail)
+
+      if (error) {
+        setError(error.message)
+      } else {
+        setResetSuccess(true)
+        setResetEmail('')
+      }
+    } catch (err) {
+      setError('An unexpected error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="container mx-auto px-4 py-16">
@@ -112,7 +136,71 @@ export default function Home() {
             </div>
           )}
 
-          {!signupSuccess && (
+          {resetSuccess && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700">
+              <h3 className="text-emphasis mb-2">password reset sent</h3>
+              <p className="text-body text-green-600">
+                We've sent you a password reset link. Please check your email and follow the instructions.
+              </p>
+              <button
+                onClick={() => {
+                  setResetSuccess(false)
+                  setShowForgotPassword(false)
+                }}
+                className="mt-3 text-metadata hover:text-green-800 underline"
+              >
+                back to login
+              </button>
+            </div>
+          )}
+
+          {showForgotPassword && !resetSuccess && (
+            <div className="bg-surface border border-border p-6 rounded">
+              <h2 className="text-header mb-4">reset password</h2>
+
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-body">
+                  {error}
+                </div>
+              )}
+
+              <form className="space-y-4" onSubmit={handleForgotPassword}>
+                <div>
+                  <label htmlFor="resetEmail" className="text-label block mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="resetEmail"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    className="w-full px-3 py-2 border border-border focus:outline-none focus:border-border-strong rounded-sm"
+                    placeholder="you@example.com"
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-black text-white py-2 px-4 text-emphasis hover:bg-gray-800 transition-colors rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'sending...' : 'send reset link'}
+                </button>
+              </form>
+
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => setShowForgotPassword(false)}
+                  className="text-metadata hover:text-black"
+                >
+                  back to login
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!signupSuccess && !showForgotPassword && !resetSuccess && (
             <div className="bg-surface border border-border p-6 rounded">
             <div className="flex mb-6 bg-gray-100 border border-border p-1 rounded-sm">
               <button
@@ -202,9 +290,12 @@ export default function Home() {
 
             {isLogin && (
               <div className="mt-4 text-center">
-                <a href="#" className="text-metadata hover:text-black">
+                <button
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-metadata hover:text-black"
+                >
                   forgot your password?
-                </a>
+                </button>
               </div>
             )}
             </div>

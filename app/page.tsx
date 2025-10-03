@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth/context'
+import Dashboard from '@/components/Dashboard'
 
 export default function Home() {
   const [isLogin, setIsLogin] = useState(true)
@@ -17,39 +18,9 @@ export default function Home() {
 
   const { user, signIn, signUp, signOut, resetPassword } = useAuth()
 
-  // If user is authenticated, show a simple dashboard
+  // If user is authenticated, show the dashboard
   if (user) {
-    return (
-      <div className="min-h-screen bg-background text-foreground">
-        <main className="container mx-auto px-4 py-16">
-          <div className="max-w-md mx-auto text-center">
-            <h1 className="text-3xl text-header mb-4 text-brand">
-              welcome back
-            </h1>
-            <p className="text-body text-gray-600 mb-6">
-              logged in as {user.email}
-            </p>
-            <p className="text-metadata mb-8">
-              dashboard coming soon...
-            </p>
-            <button
-              onClick={() => signOut()}
-              className="bg-surface border border-border px-4 py-2 text-emphasis hover:bg-gray-200 transition-colors rounded-sm"
-            >
-              log out
-            </button>
-          </div>
-        </main>
-        <a
-          href="https://github.com/jchengjr77/cactus"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed bottom-4 right-4 text-metadata hover:text-black transition-colors"
-        >
-          github
-        </a>
-      </div>
-    )
+    return <Dashboard />
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

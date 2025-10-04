@@ -18,7 +18,7 @@ export default function Home() {
 
   const { user, signIn, signUp, signOut, resetPassword } = useAuth()
 
-  // If user is authenticated, show the dashboard
+  // If user is authenticated, show the actual app
   if (user) {
     return <Dashboard />
   }

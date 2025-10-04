@@ -1,50 +1,57 @@
-# Welcome to your Expo app 👋
+# cactus
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**water your friendships.**
 
-## Get started
+## what is this?
 
-1. Install dependencies
+Cactus will keep your friend group connected.
 
-   ```bash
-   npm install
-   ```
+Create a group. Invite your friends. Set an update cadence. Commit to a group stake. Have fun.
 
-2. Start the app
+## who is this for?
 
-   ```bash
-   npx expo start
-   ```
+Long distance friendships and families, forgetful people, bad texters, the gc, the exclusive four-person gc, the ultra-exclusive three-person gc that that one person isn't in, coffee lovers, beli fanatics, dog owners, meme aficionados, the chill coworkers from your start class, gym buddies, the pilates and matcha crew, letterboxd demons, the ppl that wait 5hrs on the west side highway for a tennis court, the school group project, your jiujitsu open-mat enemies, the d&d party that always reschedules, Nathan Ang, etc.
 
-In the output, you'll find options to open the app in a
+If there are humans you care about, this is for you.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## how does it work?
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### groups
 
-## Get a fresh project
+You and your friends will create a **group**. You may be part of as many **groups** as you'd like, with as many different people as you like.
 
-When you're ready, run:
+Careful not to spread yourself too thin! More **groups** means more **updates** to share.
 
-```bash
-npm run reset-project
-```
+### updates
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Each **group** will have a cadence that **updates** are expected (e.g. daily, weekly, etc). Group members are expected to share at least one **update** within that cadence.
 
-## Learn more
+An **update** can be literally anything. It could be a five-page tirade on tipping culture. It could be "back hurts from lifting, took tylenol." It could be "smh."
 
-To learn more about developing your project with Expo, look at the following resources:
+Failure to post an **update** in a timely manner will result in you paying the **stake**.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### stakes
 
-## Join the community
+Each **group** will have a defined **stake** which is the penalty for missing an **update**. These come in different forms such as Coffee, Beer, Dinner, a brand-spanking-new PS5, or whatever else your group agrees to. **Stakes** are paid into the **group tab**.
 
-Join our community of developers creating universal apps.
+Example: JJ missed an update. His group's stake is a coffee, which is $5. That amount is charged to his credit card, and added to the group's tab.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### tab
+
+All **stakes** collected from the **group** go into the **tab**. When the **tab** is settled, the entirety of the **tab** is distributed evenly amongst all group members.
+
+The **tab** can be settled at any time with a majority vote from the group members.
+
+*Note: The tab is intended to help pay for an in-person group event of sorts, like a coffee run, a nice dinner,  party supplies, etc.*
+
+## why a cactus?
+
+Cacti are able to go long stretches without water. They are sturdy, resilient to the elements, and long lasting. You can count on them living on year after year.
+
+However, cacti will *eventually* die without water. Every so often, they need attention. They're low-maintenance, not no-maintenance. You probably see the parallels here...
+
+More importantly, they're bulbous and cutely shaped.
+
+## creds
+
+created by @jjchengart

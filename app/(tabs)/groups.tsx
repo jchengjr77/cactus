@@ -84,19 +84,20 @@ export default function GroupsScreen() {
             <Text style={styles.detailLabel}>Updates</Text>
             <Text style={styles.detailValue}>
               {item.cadence_hrs < 24
-                ? `every ${item.cadence_hrs}h`
+                ? `Every ${item.cadence_hrs}h`
                 : item.cadence_hrs === 24
-                ? "daily"
+                ? "Daily"
                 : item.cadence_hrs === 168
-                ? "weekly"
-                : `every ${Math.floor(item.cadence_hrs / 24)}d`}
+                ? "Weekly"
+                : `Every ${Math.floor(item.cadence_hrs / 24)}d`}
             </Text>
           </View>
 
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Stake</Text>
             <Text style={styles.detailValue}>
-              ${item.stake} {item.stake_name || ""}
+              {item.stake_name ? `${item.stake_name} ` : ''}
+              <Text style={styles.stakeAmount}>${item.stake}</Text>
             </Text>
           </View>
 
@@ -126,8 +127,7 @@ export default function GroupsScreen() {
       onPress={() => router.push("/create_board")}
     >
       <View style={styles.createCardContent}>
-        <Text style={styles.createCardIcon}>+</Text>
-        <Text style={styles.createCardText}>create new group</Text>
+        <Text style={styles.createCardText}>+ new group</Text>
       </View>
     </TouchableOpacity>
   );
@@ -277,6 +277,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     color: "#000000",
+  },
+  stakeAmount: {
+    color: "#4A7C59",
   },
   membersRow: {
     flexDirection: "row",

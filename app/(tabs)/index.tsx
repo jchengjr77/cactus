@@ -17,13 +17,12 @@ export default function FeedScreen() {
     try {
       setLoading(true);
 
-      // Fetch updates with user and group information
-      // Note: You'll need to create an 'updates' table in Supabase with columns:
-      // id, created_at, user_id, group_id, content, media_url, media_type
       const { data, error } = await supabase
         .from('updates')
         .select(`
-          *
+          *,
+          users!author(name),
+          groups!parent_group_id(name)
         `)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -37,8 +36,8 @@ export default function FeedScreen() {
       const transformedUpdates: Update[] = (data || []).map((item: any) => ({
         id: item.id,
         created_at: item.created_at,
-        user_id: item.user_id,
-        group_id: item.group_id,
+        user_id: item.author,
+        group_id: item.parent_group_id,
         content: item.content,
         media_url: item.media_url,
         media_type: item.media_type,

@@ -23,8 +23,8 @@ export interface User {
 export interface Update {
   id: number;
   created_at: string;
-  user_id: number; // Changed to number to match your users table
-  group_id: number;
+  user_id: number; // Maps to 'author' in database
+  group_id: number; // Maps to 'parent_group_id' in database
   content: string;
   media_url?: string | null;
   media_type?: 'photo' | 'video' | 'voice' | null;

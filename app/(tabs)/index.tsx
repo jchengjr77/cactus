@@ -87,7 +87,7 @@ export default function FeedScreen() {
           <Text style={styles.title}>cactus</Text>
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#5A8F6A" />
+          <ActivityIndicator size="large" color="#4A7C59" />
         </View>
       </View>
     );
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34,
     fontWeight: "700",
-    color: "#5A8F6A",
+    color: "#4A7C59",
   },
   listContent: {
     paddingVertical: 8,

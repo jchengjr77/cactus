@@ -97,7 +97,7 @@ export default function GroupsScreen() {
           <Text style={styles.title}>groups</Text>
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#5A8F6A" />
+          <ActivityIndicator size="large" color="#4A7C59" />
         </View>
       </View>
     );
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   headerButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: "#5A8F6A",
+    backgroundColor: "#4A7C59",
     borderRadius: 8,
   },
   headerButtonText: {
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: "#5A8F6A",
+    backgroundColor: "#4A7C59",
     borderRadius: 12,
     gap: 8,
   },

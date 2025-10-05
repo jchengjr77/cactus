@@ -1,13 +1,68 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import { Tabs, useRouter } from "expo-router";
+import { StyleSheet, View, ActivityIndicator, Text } from "react-native";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function TabsLayout() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const [userName, setUserName] = useState<string>("");
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/(auth)/login");
+    }
+  }, [user, loading]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserName();
+    }
+  }, [user]);
+
+  const fetchUserName = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('name')
+      .eq('uuid', user.id)
+      .single();
+
+    if (data && !error) {
+      setUserName(data.name || "");
+    }
+  };
+
+  const getUserInitial = () => {
+    if (userName) {
+      return userName[0].toUpperCase();
+    }
+    if (user?.email) {
+      return user.email[0].toUpperCase();
+    }
+    return "U";
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4A7C59" />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#5A8F6A",
+        tabBarActiveTintColor: "#4A7C59",
         tabBarInactiveTintColor: "#999999",
         tabBarStyle: {
           backgroundColor: "#FFFFFF",
@@ -58,7 +113,11 @@ export default function TabsLayout() {
         name="account"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <MaterialIcons name="account-circle" size={28} color={color} />
+            <View style={styles.accountIcon}>
+              <Text style={styles.accountIconText}>
+                {getUserInitial()}
+              </Text>
+            </View>
           ),
         }}
       />
@@ -67,12 +126,31 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
   newUpdateIcon: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#5A8F6A",
+    backgroundColor: "#4A7C59",
     alignItems: "center",
     justifyContent: "center",
+  },
+  accountIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#E0E0E0",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  accountIconText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#666666",
   },
 });

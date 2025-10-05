@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   },
   notificationUnread: {
     backgroundColor: "#F5F9F7",
-    borderColor: "#5A8F6A",
+    borderColor: "#4A7C59",
   },
   notificationContent: {
     flex: 1,
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#5A8F6A",
+    backgroundColor: "#4A7C59",
     marginTop: 4,
   },
 });

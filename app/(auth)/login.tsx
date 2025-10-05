@@ -1,15 +1,30 @@
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from "react-native";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginScreen() {
+  const router = useRouter();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    // TODO: Implement login logic
-    console.log("Login with:", email, password);
+  const handleLogin = async () => {
+    setLoading(true);
+    const { error } = await signIn(email, password);
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Login Failed", error.message);
+      return;
+    }
+
+    // Navigation will happen automatically via auth state change
+    router.replace("/(tabs)");
   };
+
+  const isFormValid = email.trim() !== "" && password.trim() !== "";
 
   return (
     <KeyboardAvoidingView
@@ -50,8 +65,12 @@ export default function LoginScreen() {
             />
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>log in</Text>
+          <TouchableOpacity
+            style={[styles.button, (loading || !isFormValid) && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading || !isFormValid}
+          >
+            <Text style={styles.buttonText}>{loading ? "logging in..." : "log in"}</Text>
           </TouchableOpacity>
 
           <View style={styles.footer}>
@@ -84,8 +103,8 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 40,
-    fontWeight: "600",
-    color: "#5A8F6A",
+    fontWeight: "700",
+    color: "#4A7C59",
     marginBottom: 8,
   },
   tagline: {
@@ -120,6 +139,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 8,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
   buttonText: {
     fontSize: 16,

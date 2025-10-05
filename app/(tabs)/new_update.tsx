@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   postButton: {
     paddingHorizontal: 20,
     paddingVertical: 8,
-    backgroundColor: "#5A8F6A",
+    backgroundColor: "#4A7C59",
     borderRadius: 8,
   },
   postButtonDisabled: {

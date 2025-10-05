@@ -12,7 +12,7 @@ export const Colors = {
   // Primary colors
   black: "#000000",
   white: "#FFFFFF",
-  green: "#5A8F6A", // Brand highlight color - calm forest green
+  green: "#4A7C59", // Brand highlight color - cactus green
 
   // Grays
   gray900: "#1A1A1A",

@@ -1,12 +1,57 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function AccountScreen() {
   const router = useRouter();
+  const { signOut, user } = useAuth();
+  const [userName, setUserName] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const handleLogout = () => {
-    // TODO: Implement logout logic
+  useEffect(() => {
+    if (user) {
+      fetchUserData();
+    }
+  }, [user]);
+
+  const fetchUserData = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('users')
+        .select('name, email')
+        .eq('uuid', user.id)
+        .single();
+
+      if (data && !error) {
+        setUserName(data.name || "");
+        setUserEmail(data.email || "");
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogoutPress = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    setShowLogoutModal(false);
+    await signOut();
     router.replace("/(auth)/login");
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   return (
@@ -16,56 +61,89 @@ export default function AccountScreen() {
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.profileSection}>
-          <View style={styles.avatarLarge}>
-            <Text style={styles.avatarLargeText}>U</Text>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#4A7C59" />
           </View>
-          <Text style={styles.userName}>user name</Text>
-          <Text style={styles.userEmail}>user@example.com</Text>
-        </View>
+        ) : (
+          <>
+            <View style={styles.profileSection}>
+              <View style={styles.avatarLarge}>
+                <Text style={styles.avatarLargeText}>{userName?.[0]?.toUpperCase() || userEmail?.[0]?.toUpperCase() || "U"}</Text>
+              </View>
+              <Text style={styles.userName}>{userName || "user name"}</Text>
+              <Text style={styles.userEmail}>{userEmail || "user@example.com"}</Text>
+            </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>settings</Text>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>edit profile</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>notifications</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>privacy</Text>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>stats</Text>
+              <View style={styles.statsGrid}>
+                <View style={styles.statCard}>
+                  <Text style={styles.statValue}>12</Text>
+                  <Text style={styles.statLabel}>groups</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statValue}>156</Text>
+                  <Text style={styles.statLabel}>updates</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statValue}>94%</Text>
+                  <Text style={styles.statLabel}>consistency</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statValue}>$45</Text>
+                  <Text style={styles.statLabel}>total tab</Text>
+                </View>
+              </View>
+            </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>stats</Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>12</Text>
-              <Text style={styles.statLabel}>groups</Text>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>settings</Text>
+              <TouchableOpacity style={[styles.menuItem, styles.menuItemDisabled]} disabled>
+                <Text style={[styles.menuItemText, styles.menuItemTextDisabled]}>edit profile</Text>
+                <Text style={[styles.menuItemArrow, styles.menuItemArrowDisabled]}>›</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.menuItem, styles.menuItemDisabled]} disabled>
+                <Text style={[styles.menuItemText, styles.menuItemTextDisabled]}>privacy</Text>
+                <Text style={[styles.menuItemArrow, styles.menuItemArrowDisabled]}>›</Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>156</Text>
-              <Text style={styles.statLabel}>updates</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>94%</Text>
-              <Text style={styles.statLabel}>consistency</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>$45</Text>
-              <Text style={styles.statLabel}>total tab</Text>
-            </View>
-          </View>
-        </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>log out</Text>
-        </TouchableOpacity>
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogoutPress}>
+              <Text style={styles.logoutButtonText}>log out</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </ScrollView>
+
+      <Modal
+        visible={showLogoutModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelLogout}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={handleCancelLogout}
+        >
+          <TouchableOpacity
+            style={styles.modalContent}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text style={styles.modalTitle}>log out of your account?</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalButtonCancel} onPress={handleCancelLogout}>
+                <Text style={styles.modalButtonCancelText}>cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalButtonConfirm} onPress={handleConfirmLogout}>
+                <Text style={styles.modalButtonConfirmText}>log out</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -143,13 +221,22 @@ const styles = StyleSheet.create({
     borderColor: "#E0E0E0",
     borderRadius: 12,
   },
+  menuItemDisabled: {
+    opacity: 0.5,
+  },
   menuItemText: {
     fontSize: 16,
     color: "#000000",
   },
+  menuItemTextDisabled: {
+    color: "#999999",
+  },
   menuItemArrow: {
     fontSize: 24,
     color: "#999999",
+  },
+  menuItemArrowDisabled: {
+    color: "#CCCCCC",
   },
   statsGrid: {
     flexDirection: "row",
@@ -168,7 +255,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: "600",
-    color: "#5A8F6A",
+    color: "#4A7C59",
   },
   statLabel: {
     fontSize: 12,
@@ -185,6 +272,72 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   logoutButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#EF4444",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 64,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    width: "100%",
+    maxWidth: 400,
+    gap: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#000000",
+  },
+  modalText: {
+    fontSize: 16,
+    color: "#666666",
+    lineHeight: 22,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 8,
+  },
+  modalButtonCancel: {
+    flex: 1,
+    height: 48,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalButtonCancelText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000000",
+  },
+  modalButtonConfirm: {
+    flex: 1,
+    height: 48,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#EF4444",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalButtonConfirmText: {
     fontSize: 16,
     fontWeight: "600",
     color: "#EF4444",

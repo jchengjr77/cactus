@@ -1,17 +1,66 @@
-import { Link } from "expo-router";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function SignupScreen() {
+  const router = useRouter();
+  const { signUp } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSignup = () => {
-    // TODO: Implement signup logic
-    console.log("Signup with:", { name, email, password });
+  const [showVerificationScreen, setShowVerificationScreen] = useState(false);
+
+  const handleSignup = async () => {
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match");
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await signUp(email, password, name);
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Signup Failed", error.message);
+      return;
+    }
+
+    setShowVerificationScreen(true);
   };
+
+  const isFormValid =
+    name.trim() !== "" &&
+    email.trim() !== "" &&
+    password.trim() !== "" &&
+    confirmPassword.trim() !== "";
+
+  if (showVerificationScreen) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.verificationContainer}>
+          <Text style={styles.logo}>welcome</Text>
+          <Text style={styles.verificationText}>
+            Click the verification link in your email to log in.
+          </Text>
+          <TouchableOpacity
+            style={styles.verificationButton}
+            onPress={() => router.replace("/(auth)/login")}
+          >
+            <Text style={styles.buttonText}>return to login</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -24,8 +73,8 @@ export default function SignupScreen() {
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.logo}>cactus</Text>
-            <Text style={styles.tagline}>water your friendships</Text>
+            <Text style={styles.logo}>sign up</Text>
+            <Text style={styles.tagline}>your people are waiting!</Text>
           </View>
 
           <View style={styles.form}>
@@ -35,7 +84,7 @@ export default function SignupScreen() {
                 style={styles.input}
                 value={name}
                 onChangeText={setName}
-                placeholder="Your name"
+                placeholder="your name"
                 placeholderTextColor="#999"
                 autoComplete="name"
               />
@@ -81,8 +130,12 @@ export default function SignupScreen() {
               />
             </View>
 
-            <TouchableOpacity style={styles.button} onPress={handleSignup}>
-              <Text style={styles.buttonText}>create account</Text>
+            <TouchableOpacity
+              style={[styles.button, (loading || !isFormValid) && styles.buttonDisabled]}
+              onPress={handleSignup}
+              disabled={loading || !isFormValid}
+            >
+              <Text style={styles.buttonText}>{loading ? "creating account..." : "join cactus"}</Text>
             </TouchableOpacity>
 
             <View style={styles.footer}>
@@ -120,8 +173,8 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 40,
-    fontWeight: "600",
-    color: "#5A8F6A",
+    fontWeight: "700",
+    color: "#4A7C59",
     marginBottom: 8,
   },
   tagline: {
@@ -157,6 +210,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 8,
   },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
   buttonText: {
     fontSize: 16,
     fontWeight: "600",
@@ -177,5 +233,33 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000000",
     textDecorationLine: "underline",
+  },
+  verificationContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    gap: 16,
+  },
+  verificationText: {
+    fontSize: 16,
+    color: "#666666",
+    textAlign: "center",
+    lineHeight: 24,
+  },
+  verificationEmail: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000000",
+    textAlign: "center",
+  },
+  verificationButton: {
+    height: 48,
+    backgroundColor: "#000000",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 16,
+    paddingHorizontal: 32,
   },
 });

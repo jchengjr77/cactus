@@ -55,7 +55,7 @@ export default function FeedScreen() {
         .select(`
           *,
           users!author(name, avatar_color),
-          groups!parent_group_id(name)
+          groups!parent_group_id(name, emoji_icon)
         `)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -78,6 +78,7 @@ export default function FeedScreen() {
         user_name: item.users?.name || 'Unknown',
         user_avatar_color: item.users?.avatar_color || null,
         group_name: item.groups?.name || 'Unknown',
+        group_emoji: item.groups?.emoji_icon || null,
       }));
 
       // Store IDs of initially unread updates
@@ -143,7 +144,9 @@ export default function FeedScreen() {
             <Text style={styles.userName}>
               <Text style={styles.userNameBold}>{getFirstName(item.user_name || 'Unknown')}</Text>
               <Text style={styles.userNameNormal}> in </Text>
-              <Text style={styles.groupNameBold}>{item.group_name}</Text>
+              <Text style={styles.groupNameBold}>
+                {item.group_emoji ? `${item.group_emoji} ` : ''}{item.group_name}
+              </Text>
             </Text>
             <Text style={styles.timestamp}>{formatTimeAgo(item.created_at)}</Text>
           </View>

@@ -34,4 +34,5 @@ export interface Update {
   user_name?: string;
   user_avatar_color?: string | null;
   group_name?: string;
+  group_emoji?: string | null;
 }

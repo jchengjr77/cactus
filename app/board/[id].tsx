@@ -4,9 +4,11 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Colors } from "@/constants/Colors";
 
 interface UpdateWithUser extends Update {
   user_name: string;
+  user_avatar_color?: string | null;
 }
 
 export default function GroupBoardScreen() {
@@ -71,7 +73,7 @@ export default function GroupBoardScreen() {
 
       let query = supabase
         .from('updates')
-        .select('*, users!inner(name)')
+        .select('*, users!inner(name, avatar_color)')
         .eq('parent_group_id', id)
         .order('created_at', { ascending: false });
 
@@ -92,9 +94,11 @@ export default function GroupBoardScreen() {
         user_id: item.author,
         group_id: item.parent_group_id,
         content: item.content,
+        read_by: item.read_by || [],
         media_url: item.media_url,
         media_type: item.media_type,
         user_name: item.users?.name || 'Unknown',
+        user_avatar_color: item.users?.avatar_color || null,
       }));
 
       setUpdates(transformedUpdates);
@@ -108,7 +112,7 @@ export default function GroupBoardScreen() {
   const renderUpdate = ({ item }: { item: UpdateWithUser }) => (
     <View style={styles.updateCard}>
       <View style={styles.updateRow}>
-        <View style={styles.avatar}>
+        <View style={[styles.avatar, { backgroundColor: item.user_avatar_color || '#E0E0E0' }]}>
           <Text style={styles.avatarText}>{item.user_name?.[0]?.toUpperCase() || "U"}</Text>
         </View>
         <View style={styles.updateContentWrapper}>
@@ -245,7 +249,7 @@ function formatTimeAgo(dateString: string): string {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
   },
   header: {
     paddingHorizontal: 24,
@@ -257,7 +261,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: "#4A7C59",
+    color: Colors.brandGreen,
     fontWeight: "600",
   },
   titleRow: {
@@ -275,7 +279,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34,
     fontWeight: "700",
-    color: "#000000",
+    color: Colors.black,
   },
   inactiveBadge: {
     paddingHorizontal: 8,
@@ -308,15 +312,15 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#000000",
+    color: Colors.black,
   },
   stakeAmount: {
-    color: "#4A7C59",
+    color: Colors.brandGreen,
   },
   infoDivider: {
     width: 1,
     height: 24,
-    backgroundColor: "#E0E0E0",
+    backgroundColor: Colors.lightGrey,
   },
   filterBar: {
     maxHeight: 60,
@@ -333,13 +337,13 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: "#F5F5F5",
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: Colors.lightGrey,
     alignItems: "center",
     justifyContent: "center",
   },
   filterChipActive: {
-    backgroundColor: "#4A7C59",
-    borderColor: "#4A7C59",
+    backgroundColor: Colors.brandGreen,
+    borderColor: Colors.brandGreen,
   },
   filterChipText: {
     fontSize: 13,
@@ -347,7 +351,7 @@ const styles = StyleSheet.create({
     color: "#666666",
   },
   filterChipTextActive: {
-    color: "#FFFFFF",
+    color: Colors.background,
   },
   listContent: {
     paddingVertical: 8,
@@ -374,11 +378,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   updateCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#F5F5F5",
+    borderBottomColor: Colors.lightGrey,
   },
   updateRow: {
     flexDirection: "row",
@@ -388,7 +392,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#E0E0E0",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -409,7 +412,7 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#000000",
+    color: Colors.black,
   },
   timestamp: {
     fontSize: 13,
@@ -418,7 +421,7 @@ const styles = StyleSheet.create({
   updateContent: {
     fontSize: 15,
     lineHeight: 22,
-    color: "#000000",
+    color: Colors.black,
   },
   loadingContainer: {
     flex: 1,

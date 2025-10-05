@@ -2,6 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Colors } from "@/constants/Colors";
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -156,7 +157,7 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 40,
     fontWeight: "700",
-    color: "#4A7C59",
+    color: Colors.brandGreen,
     marginBottom: 8,
   },
   tagline: {
@@ -190,21 +191,21 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#000000",
+    color: Colors.black,
   },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: Colors.lightGrey,
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: "#000000",
-    backgroundColor: "#FFFFFF",
+    color: Colors.black,
+    backgroundColor: Colors.background,
   },
   button: {
     height: 48,
-    backgroundColor: "#000000",
+    backgroundColor: Colors.brandGreen,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -216,7 +217,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: Colors.background,
   },
   footer: {
     flexDirection: "row",
@@ -231,7 +232,7 @@ const styles = StyleSheet.create({
   link: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#000000",
+    color: Colors.brandGreen,
     textDecorationLine: "underline",
   },
   verificationContainer: {
@@ -250,12 +251,12 @@ const styles = StyleSheet.create({
   verificationEmail: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#000000",
+    color: Colors.black,
     textAlign: "center",
   },
   verificationButton: {
     height: 48,
-    backgroundColor: "#000000",
+    backgroundColor: Colors.brandGreen,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",

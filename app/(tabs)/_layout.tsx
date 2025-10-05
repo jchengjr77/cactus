@@ -4,11 +4,13 @@ import { StyleSheet, View, ActivityIndicator, Text } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { Colors } from "@/constants/Colors";
 
 export default function TabsLayout() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [userName, setUserName] = useState<string>("");
+  const [userAvatarColor, setUserAvatarColor] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -27,12 +29,13 @@ export default function TabsLayout() {
 
     const { data, error } = await supabase
       .from('users')
-      .select('name')
+      .select('name, avatar_color')
       .eq('uuid', user.id)
       .single();
 
     if (data && !error) {
       setUserName(data.name || "");
+      setUserAvatarColor(data.avatar_color || null);
     }
   };
 
@@ -49,7 +52,7 @@ export default function TabsLayout() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4A7C59" />
+        <ActivityIndicator size="large" color={Colors.brandGreen} />
       </View>
     );
   }
@@ -62,12 +65,12 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#4A7C59",
+        tabBarActiveTintColor: Colors.brandGreen,
         tabBarInactiveTintColor: "#999999",
         tabBarStyle: {
-          backgroundColor: "#FFFFFF",
+          backgroundColor: Colors.background,
           borderTopWidth: 1,
-          borderTopColor: "#E0E0E0",
+          borderTopColor: Colors.lightGrey,
           height: 80,
           paddingBottom: 24,
           paddingTop: 8,
@@ -113,7 +116,7 @@ export default function TabsLayout() {
         name="account"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <View style={styles.accountIcon}>
+            <View style={[styles.accountIcon, { backgroundColor: userAvatarColor || '#E0E0E0' }]}>
               <Text style={styles.accountIconText}>
                 {getUserInitial()}
               </Text>
@@ -130,13 +133,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
   },
   newUpdateIcon: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#4A7C59",
+    backgroundColor: Colors.brandGreen,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -144,7 +147,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#E0E0E0",
     alignItems: "center",
     justifyContent: "center",
   },

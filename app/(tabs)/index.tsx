@@ -1,19 +1,52 @@
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Update } from "@/types/database";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Colors } from "@/constants/Colors";
 
 export default function FeedScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [updates, setUpdates] = useState<Update[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [initialUnreadIds, setInitialUnreadIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    fetchUpdates();
-  }, []);
+    if (user) {
+      fetchCurrentUser();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (currentUserId !== null) {
+      fetchUpdates();
+    }
+  }, [currentUserId]);
+
+  const fetchCurrentUser = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id')
+        .eq('uuid', user.id)
+        .single();
+
+      if (data && !error) {
+        setCurrentUserId(data.id);
+      }
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+    }
+  };
 
   const fetchUpdates = async () => {
+    if (currentUserId === null) return;
+
     try {
       setLoading(true);
 
@@ -21,7 +54,7 @@ export default function FeedScreen() {
         .from('updates')
         .select(`
           *,
-          users!author(name),
+          users!author(name, avatar_color),
           groups!parent_group_id(name)
         `)
         .order('created_at', { ascending: false })
@@ -39,13 +72,26 @@ export default function FeedScreen() {
         user_id: item.author,
         group_id: item.parent_group_id,
         content: item.content,
+        read_by: item.read_by || [],
         media_url: item.media_url,
         media_type: item.media_type,
         user_name: item.users?.name || 'Unknown',
+        user_avatar_color: item.users?.avatar_color || null,
         group_name: item.groups?.name || 'Unknown',
       }));
 
+      // Store IDs of initially unread updates
+      const unreadIds = new Set(
+        transformedUpdates
+          .filter(update => !update.read_by.includes(currentUserId))
+          .map(update => update.id)
+      );
+      setInitialUnreadIds(unreadIds);
+
       setUpdates(transformedUpdates);
+
+      // Mark all updates as read in the database (but keep UI showing them as unread)
+      await markAllAsRead(transformedUpdates);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -53,24 +99,52 @@ export default function FeedScreen() {
     }
   };
 
+  const markAllAsRead = async (updates: Update[]) => {
+    if (currentUserId === null) return;
+
+    try {
+      // Find updates that haven't been read by current user
+      const unreadUpdates = updates.filter(update => !update.read_by.includes(currentUserId));
+
+      // Mark each unread update as read in database only
+      for (const update of unreadUpdates) {
+        const updatedReadBy = [...update.read_by, currentUserId];
+
+        await supabase
+          .from('updates')
+          .update({ read_by: updatedReadBy })
+          .eq('id', update.id);
+      }
+    } catch (error) {
+      console.error('Error marking updates as read:', error);
+    }
+  };
+
+  const isUnread = (update: Update): boolean => {
+    return initialUnreadIds.has(update.id);
+  };
+
+  const getFirstName = (fullName: string): string => {
+    return fullName.split(' ')[0];
+  };
+
   const renderUpdate = ({ item }: { item: Update }) => (
     <TouchableOpacity
       style={styles.updateCard}
       onPress={() => router.push(`/board/${item.group_id}`)}
     >
+      {isUnread(item) && <View style={styles.unreadDot} />}
       <View style={styles.updateRow}>
-        <View style={styles.avatar}>
+        <View style={[styles.avatar, { backgroundColor: item.user_avatar_color || '#E0E0E0' }]}>
           <Text style={styles.avatarText}>{item.user_name?.[0]?.toUpperCase() || "U"}</Text>
         </View>
         <View style={styles.updateContentWrapper}>
           <View style={styles.updateHeader}>
-            <View style={styles.userRow}>
-              <Text style={styles.userName}>
-                <Text style={styles.userNameBold}>{item.user_name}</Text>
-                <Text style={styles.userNameNormal}> in </Text>
-                <Text style={styles.groupNameBold}>{item.group_name}</Text>
-              </Text>
-            </View>
+            <Text style={styles.userName}>
+              <Text style={styles.userNameBold}>{getFirstName(item.user_name || 'Unknown')}</Text>
+              <Text style={styles.userNameNormal}> in </Text>
+              <Text style={styles.groupNameBold}>{item.group_name}</Text>
+            </Text>
             <Text style={styles.timestamp}>{formatTimeAgo(item.created_at)}</Text>
           </View>
           <Text style={styles.updateContent}>{item.content}</Text>
@@ -139,19 +213,19 @@ function formatTimeAgo(dateString: string): string {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
   },
   header: {
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
+    borderBottomColor: Colors.lightGrey,
   },
   title: {
     fontSize: 34,
     fontWeight: "700",
-    color: "#4A7C59",
+    color: Colors.brandGreen,
   },
   listContent: {
     paddingVertical: 8,
@@ -169,9 +243,9 @@ const styles = StyleSheet.create({
   createGroupButton: {
     paddingHorizontal: 24,
     paddingVertical: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: Colors.lightGrey,
     borderRadius: 12,
   },
   createGroupButtonText: {
@@ -180,11 +254,11 @@ const styles = StyleSheet.create({
     color: "#999999",
   },
   updateCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#F5F5F5",
+    borderBottomColor: Colors.lightGrey,
   },
   updateRow: {
     flexDirection: "row",
@@ -194,7 +268,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#E0E0E0",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -208,15 +281,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   updateHeader: {
-    gap: 2,
-  },
-  userRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
   },
   userName: {
     fontSize: 15,
-    color: "#000000",
+    color: Colors.black,
+    flex: 1,
   },
   userNameBold: {
     fontWeight: "600",
@@ -227,6 +299,15 @@ const styles = StyleSheet.create({
   groupNameBold: {
     fontWeight: "600",
   },
+  unreadDot: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.highlight,
+  },
   timestamp: {
     fontSize: 13,
     color: "#999999",
@@ -234,7 +315,7 @@ const styles = StyleSheet.create({
   updateContent: {
     fontSize: 15,
     lineHeight: 22,
-    color: "#000000",
+    color: Colors.black,
   },
   loadingContainer: {
     flex: 1,

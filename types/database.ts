@@ -18,6 +18,7 @@ export interface User {
   name: string;
   email: string;
   uuid: string | null;
+  avatar_color: string | null;
 }
 
 export interface Update {
@@ -26,9 +27,11 @@ export interface Update {
   user_id: number; // Maps to 'author' in database
   group_id: number; // Maps to 'parent_group_id' in database
   content: string;
+  read_by: number[]; // Array of user IDs who have read this update
   media_url?: string | null;
   media_type?: 'photo' | 'video' | 'voice' | null;
   // Joined data
   user_name?: string;
+  user_avatar_color?: string | null;
   group_name?: string;
 }

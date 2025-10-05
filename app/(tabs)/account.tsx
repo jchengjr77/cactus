@@ -3,12 +3,14 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Colors } from "@/constants/Colors";
 
 export default function AccountScreen() {
   const router = useRouter();
   const { signOut, user } = useAuth();
   const [userName, setUserName] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("");
+  const [userAvatarColor, setUserAvatarColor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
@@ -32,13 +34,14 @@ export default function AccountScreen() {
       setLoading(true);
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, email')
+        .select('id, name, email, avatar_color')
         .eq('uuid', user.id)
         .single();
 
       if (data && !error) {
         setUserName(data.name || "");
         setUserEmail(data.email || "");
+        setUserAvatarColor(data.avatar_color || null);
         setUserId(data.id);
         // Fetch stats after getting user ID
         await fetchStats(data.id);
@@ -118,7 +121,7 @@ export default function AccountScreen() {
         ) : (
           <>
             <View style={styles.profileSection}>
-              <View style={styles.avatarLarge}>
+              <View style={[styles.avatarLarge, { backgroundColor: userAvatarColor || '#E0E0E0' }]}>
                 <Text style={styles.avatarLargeText}>{userName?.[0]?.toUpperCase() || userEmail?.[0]?.toUpperCase() || "U"}</Text>
               </View>
               <Text style={styles.userName}>{userName || "user name"}</Text>
@@ -201,19 +204,19 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
   },
   header: {
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
+    borderBottomColor: Colors.lightGrey,
   },
   title: {
     fontSize: 34,
     fontWeight: "700",
-    color: "#000000",
+    color: Colors.black,
   },
   content: {
     flex: 1,
@@ -231,7 +234,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#E0E0E0",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -243,7 +245,7 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#000000",
+    color: Colors.black,
     marginTop: 8,
   },
   userEmail: {
@@ -266,9 +268,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 16,
     paddingHorizontal: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: Colors.lightGrey,
     borderRadius: 12,
   },
   menuItemDisabled: {
@@ -276,7 +278,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 16,
-    color: "#000000",
+    color: Colors.black,
   },
   menuItemTextDisabled: {
     color: "#999999",
@@ -305,7 +307,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: "600",
-    color: "#4A7C59",
+    color: Colors.brandGreen,
   },
   statLabel: {
     fontSize: 12,
@@ -313,7 +315,7 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     height: 48,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
     borderWidth: 1,
     borderColor: "#EF4444",
     borderRadius: 12,
@@ -340,7 +342,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   modalContent: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
     borderRadius: 16,
     padding: 24,
     width: "100%",
@@ -350,7 +352,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#000000",
+    color: Colors.black,
   },
   modalText: {
     fontSize: 16,
@@ -365,9 +367,9 @@ const styles = StyleSheet.create({
   modalButtonCancel: {
     flex: 1,
     height: 48,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: Colors.lightGrey,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -375,12 +377,12 @@ const styles = StyleSheet.create({
   modalButtonCancelText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#000000",
+    color: Colors.black,
   },
   modalButtonConfirm: {
     flex: 1,
     height: 48,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
     borderWidth: 1,
     borderColor: "#EF4444",
     borderRadius: 12,

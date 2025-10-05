@@ -3,6 +3,7 @@ import { Group } from "@/types/database";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Colors } from "@/constants/Colors";
 
 interface GroupWithMembers extends Group {
   memberNames?: string[];
@@ -174,7 +175,7 @@ export default function GroupsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
   },
   header: {
     flexDirection: "row",
@@ -184,23 +185,23 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
+    borderBottomColor: Colors.lightGrey,
   },
   title: {
     fontSize: 34,
     fontWeight: "700",
-    color: "#000000",
+    color: Colors.black,
   },
   headerButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: "#4A7C59",
+    backgroundColor: Colors.brandGreen,
     borderRadius: 8,
   },
   headerButtonText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: Colors.background,
   },
   listContent: {
     padding: 24,
@@ -234,9 +235,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   groupCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: Colors.lightGrey,
     borderRadius: 12,
     padding: 16,
     gap: 12,
@@ -249,7 +250,7 @@ const styles = StyleSheet.create({
   groupName: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#000000",
+    color: Colors.black,
   },
   inactiveBadge: {
     paddingHorizontal: 8,
@@ -276,10 +277,10 @@ const styles = StyleSheet.create({
   detailValue: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#000000",
+    color: Colors.black,
   },
   stakeAmount: {
-    color: "#4A7C59",
+    color: Colors.brandGreen,
   },
   membersRow: {
     flexDirection: "row",
@@ -305,9 +306,9 @@ const styles = StyleSheet.create({
     color: "#666666",
   },
   createCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.background,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: Colors.lightGrey,
     borderRadius: 12,
     padding: 16,
     minHeight: 100,
@@ -322,11 +323,11 @@ const styles = StyleSheet.create({
   createCardIcon: {
     fontSize: 24,
     fontWeight: "600",
-    color: "#4A7C59",
+    color: Colors.brandGreen,
   },
   createCardText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#4A7C59",
+    color: Colors.brandGreen,
   },
 });

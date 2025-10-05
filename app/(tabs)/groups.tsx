@@ -1,12 +1,16 @@
+import { supabase } from "@/lib/supabase";
 import { Group } from "@/types/database";
 import { useRouter } from "expo-router";
-import { useState, useEffect } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from "react-native";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
+interface GroupWithMembers extends Group {
+  memberNames?: string[];
+}
 
 export default function GroupsScreen() {
   const router = useRouter();
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [groups, setGroups] = useState<GroupWithMembers[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,7 +31,26 @@ export default function GroupsScreen() {
         return;
       }
 
-      setGroups(data || []);
+      // Fetch member names for each group
+      const groupsWithMembers = await Promise.all(
+        (data || []).map(async (group) => {
+          const memberIds = group.members || [];
+
+          if (memberIds.length === 0) {
+            return { ...group, memberNames: [] };
+          }
+
+          const { data: usersData, error: usersError } = await supabase
+            .from('users')
+            .select('id, name')
+            .in('id', memberIds);
+
+          const memberNames = usersData?.map(u => u.name) || [];
+          return { ...group, memberNames };
+        })
+      );
+
+      setGroups(groupsWithMembers);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -35,57 +58,76 @@ export default function GroupsScreen() {
     }
   };
 
-  const renderGroup = ({ item }: { item: Group }) => (
-    <TouchableOpacity
-      style={styles.groupCard}
-      onPress={() => router.push(`/board/${item.id}`)}
-    >
-      <View style={styles.groupHeader}>
-        <Text style={styles.groupName}>{item.name}</Text>
-        {!item.is_active && (
-          <View style={styles.inactiveBadge}>
-            <Text style={styles.inactiveBadgeText}>inactive</Text>
+  const renderGroup = ({ item }: { item: GroupWithMembers }) => {
+    const memberNames = item.memberNames || [];
+    const displayMembers = memberNames.slice(0, 4);
+    const remainingCount = memberNames.length - 4;
+
+    return (
+      <TouchableOpacity
+        style={styles.groupCard}
+        onPress={() => router.push(`/board/${item.id}`)}
+      >
+        <View style={styles.groupHeader}>
+          <Text style={styles.groupName}>
+            {item.emoji_icon ? `${item.emoji_icon} ` : ''}{item.name}
+          </Text>
+          {!item.is_active && (
+            <View style={styles.inactiveBadge}>
+              <Text style={styles.inactiveBadgeText}>inactive</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.groupDetails}>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Updates</Text>
+            <Text style={styles.detailValue}>
+              {item.cadence_hrs < 24
+                ? `every ${item.cadence_hrs}h`
+                : item.cadence_hrs === 24
+                ? "daily"
+                : item.cadence_hrs === 168
+                ? "weekly"
+                : `every ${Math.floor(item.cadence_hrs / 24)}d`}
+            </Text>
           </View>
-        )}
-      </View>
 
-      <View style={styles.groupDetails}>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>cadence</Text>
-          <Text style={styles.detailValue}>
-            {item.cadence_hrs < 24
-              ? `${item.cadence_hrs}h`
-              : item.cadence_hrs === 24
-              ? "daily"
-              : item.cadence_hrs === 168
-              ? "weekly"
-              : `${Math.floor(item.cadence_hrs / 24)}d`}
-          </Text>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Stake</Text>
+            <Text style={styles.detailValue}>
+              ${item.stake} {item.stake_name || ""}
+            </Text>
+          </View>
+
+          <View style={styles.membersRow}>
+            <Text style={styles.detailLabel}>Members</Text>
+            <View style={styles.memberBadges}>
+              {displayMembers.map((name, index) => (
+                <View key={index} style={styles.memberBadge}>
+                  <Text style={styles.memberBadgeText}>{name}</Text>
+                </View>
+              ))}
+              {remainingCount > 0 && (
+                <View style={styles.memberBadge}>
+                  <Text style={styles.memberBadgeText}>+{remainingCount} more</Text>
+                </View>
+              )}
+            </View>
+          </View>
         </View>
+      </TouchableOpacity>
+    );
+  };
 
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>stake</Text>
-          <Text style={styles.detailValue}>
-            ${item.stake} {item.stake_name || ""}
-          </Text>
-        </View>
-
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>members</Text>
-          <Text style={styles.detailValue}>{item.members.length}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const renderCreateButton = () => (
+  const renderCreateCard = () => (
     <TouchableOpacity
-      style={styles.createButton}
+      style={styles.createCard}
       onPress={() => router.push("/create_board")}
     >
-      <View style={styles.createButtonContent}>
-        <Text style={styles.createButtonIcon}>+</Text>
-        <Text style={styles.createButtonText}>create new group</Text>
+      <View style={styles.createCardContent}>
+        <Text style={styles.createCardIcon}>+</Text>
+        <Text style={styles.createCardText}>create new group</Text>
       </View>
     </TouchableOpacity>
   );
@@ -107,27 +149,21 @@ export default function GroupsScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>groups</Text>
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={() => router.push("/create_board")}
-        >
-          <Text style={styles.headerButtonText}>+ new</Text>
-        </TouchableOpacity>
       </View>
 
       <FlatList
         data={groups}
         renderItem={renderGroup}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={groups.length === 0 ? styles.emptyListContent : styles.listContent}
+        contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshing={loading}
         onRefresh={fetchGroups}
+        ListFooterComponent={renderCreateCard}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>no groups yet</Text>
             <Text style={styles.emptyStateSubtext}>create your first group to get started</Text>
-            {renderCreateButton()}
           </View>
         }
       />
@@ -242,27 +278,52 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#000000",
   },
-  createButton: {
-    marginTop: 16,
-  },
-  createButtonContent: {
+  membersRow: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: "#4A7C59",
-    borderRadius: 12,
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     gap: 8,
   },
-  createButtonIcon: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#FFFFFF",
+  memberBadges: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    flex: 1,
+    justifyContent: "flex-end",
   },
-  createButtonText: {
+  memberBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 6,
+  },
+  memberBadgeText: {
+    fontSize: 12,
+    color: "#666666",
+  },
+  createCard: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    padding: 16,
+    minHeight: 100,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  createCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  createCardIcon: {
+    fontSize: 24,
+    fontWeight: "600",
+    color: "#4A7C59",
+  },
+  createCardText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: "#4A7C59",
   },
 });

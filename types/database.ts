@@ -3,6 +3,7 @@ export interface Group {
   created_at: string;
   is_active: boolean;
   name: string;
+  emoji_icon: string | null;
   cadence_hrs: number;
   updates_due: string | null;
   stake: number;

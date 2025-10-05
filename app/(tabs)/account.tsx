@@ -11,6 +11,13 @@ export default function AccountScreen() {
   const [userEmail, setUserEmail] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [stats, setStats] = useState({
+    groupCount: 0,
+    updateCount: 0,
+    consistency: 0,
+    totalTab: 0,
+  });
 
   useEffect(() => {
     if (user) {
@@ -25,18 +32,61 @@ export default function AccountScreen() {
       setLoading(true);
       const { data, error } = await supabase
         .from('users')
-        .select('name, email')
+        .select('id, name, email')
         .eq('uuid', user.id)
         .single();
 
       if (data && !error) {
         setUserName(data.name || "");
         setUserEmail(data.email || "");
+        setUserId(data.id);
+        // Fetch stats after getting user ID
+        await fetchStats(data.id);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStats = async (userIdParam: number) => {
+    try {
+      // Fetch group count - count groups where user is in members array
+      const { data: groupsData, error: groupsError } = await supabase
+        .from('groups')
+        .select('id, members')
+        .contains('members', [userIdParam.toString()]);
+
+      const groupCount = groupsData?.length || 0;
+
+      // Fetch update count
+      const { data: updatesData, error: updatesError } = await supabase
+        .from('updates')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userIdParam);
+
+      const updateCount = updatesData?.length || 0;
+
+      // Fetch total penalties (tab)
+      const { data: penaltiesData, error: penaltiesError } = await supabase
+        .from('penalties')
+        .select('stake_amount')
+        .eq('user', userIdParam);
+
+      const totalTab = penaltiesData?.reduce((sum, penalty) => sum + (penalty.stake_amount || 0), 0) || 0;
+
+      // Calculate consistency (placeholder for now - can be enhanced later)
+      const consistency = updateCount > 0 ? Math.min(100, Math.round((updateCount / (groupCount * 7)) * 100)) : 0;
+
+      setStats({
+        groupCount,
+        updateCount,
+        consistency,
+        totalTab,
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
     }
   };
 
@@ -79,19 +129,19 @@ export default function AccountScreen() {
               <Text style={styles.sectionTitle}>stats</Text>
               <View style={styles.statsGrid}>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>12</Text>
+                  <Text style={styles.statValue}>{stats.groupCount}</Text>
                   <Text style={styles.statLabel}>groups</Text>
                 </View>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>156</Text>
+                  <Text style={styles.statValue}>{stats.updateCount}</Text>
                   <Text style={styles.statLabel}>updates</Text>
                 </View>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>94%</Text>
+                  <Text style={styles.statValue}>{stats.consistency}%</Text>
                   <Text style={styles.statLabel}>consistency</Text>
                 </View>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>$45</Text>
+                  <Text style={styles.statValue}>${stats.totalTab}</Text>
                   <Text style={styles.statLabel}>total tab</Text>
                 </View>
               </View>

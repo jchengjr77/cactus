@@ -1,60 +1,58 @@
+import { supabase } from "@/lib/supabase";
 import { Update } from "@/types/database";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
-
-// Mock data for now - will be replaced with actual Supabase data
-const MOCK_UPDATES: Update[] = [
-  {
-    id: 1,
-    created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
-    user_id: "user1",
-    group_id: 1,
-    content: "Just finished a great hike in the mountains! The weather was perfect.",
-    user_name: "Sarah",
-    group_name: "College Crew",
-  },
-  {
-    id: 2,
-    created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-    user_id: "user2",
-    group_id: 2,
-    content: "Made mom's famous lasagna recipe tonight. Turned out amazing! 🍝",
-    user_name: "Mike",
-    group_name: "Family",
-  },
-  {
-    id: 3,
-    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-    user_id: "user3",
-    group_id: 1,
-    content: "Started reading that book you recommended. Already hooked!",
-    user_name: "Alex",
-    group_name: "College Crew",
-  },
-  {
-    id: 4,
-    created_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), // 8 hours ago
-    user_id: "user4",
-    group_id: 3,
-    content: "Finally cleaned the apartment. Feels like a new place!",
-    user_name: "Jordan",
-    group_name: "Roommates",
-  },
-  {
-    id: 5,
-    created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // 12 hours ago
-    user_id: "user5",
-    group_id: 2,
-    content: "Work presentation went really well today. Big relief!",
-    user_name: "Taylor",
-    group_name: "Family",
-  },
-];
+import { useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function FeedScreen() {
   const router = useRouter();
-  const [updates] = useState<Update[]>(MOCK_UPDATES);
+  const [updates, setUpdates] = useState<Update[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchUpdates();
+  }, []);
+
+  const fetchUpdates = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch updates with user and group information
+      // Note: You'll need to create an 'updates' table in Supabase with columns:
+      // id, created_at, user_id, group_id, content, media_url, media_type
+      const { data, error } = await supabase
+        .from('updates')
+        .select(`
+          *
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('Error fetching updates:', error);
+        return;
+      }
+
+      // Transform the data to match our Update type
+      const transformedUpdates: Update[] = (data || []).map((item: any) => ({
+        id: item.id,
+        created_at: item.created_at,
+        user_id: item.user_id,
+        group_id: item.group_id,
+        content: item.content,
+        media_url: item.media_url,
+        media_type: item.media_type,
+        user_name: item.users?.name || 'Unknown',
+        group_name: item.groups?.name || 'Unknown',
+      }));
+
+      setUpdates(transformedUpdates);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderUpdate = ({ item }: { item: Update }) => (
     <TouchableOpacity
@@ -82,6 +80,19 @@ export default function FeedScreen() {
     </TouchableOpacity>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>cactus</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#5A8F6A" />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -92,8 +103,20 @@ export default function FeedScreen() {
         data={updates}
         renderItem={renderUpdate}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={updates.length === 0 ? styles.emptyListContent : styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshing={loading}
+        onRefresh={fetchUpdates}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <TouchableOpacity
+              style={styles.createGroupButton}
+              onPress={() => router.push("/(tabs)/groups")}
+            >
+              <Text style={styles.createGroupButtonText}>+ create a group</Text>
+            </TouchableOpacity>
+          </View>
+        }
       />
     </View>
   );
@@ -133,6 +156,29 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingVertical: 8,
+  },
+  emptyListContent: {
+    flex: 1,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 64,
+    paddingHorizontal: 32,
+  },
+  createGroupButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+  },
+  createGroupButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#999999",
   },
   updateCard: {
     backgroundColor: "#FFFFFF",
@@ -190,5 +236,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: "#000000",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

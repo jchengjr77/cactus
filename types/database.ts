@@ -12,15 +12,17 @@ export interface Group {
 }
 
 export interface User {
-  id: string;
+  id: number;
+  created_at: string;
+  name: string;
   email: string;
-  name?: string;
+  uuid: string | null;
 }
 
 export interface Update {
   id: number;
   created_at: string;
-  user_id: string;
+  user_id: number; // Changed to number to match your users table
   group_id: number;
   content: string;
   media_url?: string | null;

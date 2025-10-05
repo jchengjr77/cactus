@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
     borderBottomColor: "#E0E0E0",
   },
   title: {
-    fontSize: 28,
-    fontWeight: "600",
+    fontSize: 34,
+    fontWeight: "700",
     color: "#000000",
   },
   content: {

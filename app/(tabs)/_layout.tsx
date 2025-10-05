@@ -1,6 +1,6 @@
+import { MaterialIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { View, StyleSheet } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { StyleSheet, View } from "react-native";
 
 export default function TabsLayout() {
   return (
@@ -24,15 +24,15 @@ export default function TabsLayout() {
         name="index"
         options={{
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="home-variant" size={28} color={color} />
+            <MaterialIcons name="home-filled" size={28} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="groups"
         options={{
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="magnify" size={28} color={color} />
+            <MaterialIcons name="groups" size={28} color={color} />
           ),
         }}
       />
@@ -41,7 +41,7 @@ export default function TabsLayout() {
         options={{
           tabBarIcon: ({ color }) => (
             <View style={styles.newUpdateIcon}>
-              <MaterialCommunityIcons name="pencil" size={20} color="#FFFFFF" />
+              <MaterialIcons name="create" size={20} color="#FFFFFF" />
             </View>
           ),
         }}
@@ -50,7 +50,7 @@ export default function TabsLayout() {
         name="notifications"
         options={{
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="bell" size={28} color={color} />
+            <MaterialIcons name="notifications" size={28} color={color} />
           ),
         }}
       />
@@ -58,7 +58,7 @@ export default function TabsLayout() {
         name="account"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name="account-circle" size={28} color={color} />
+            <MaterialIcons name="account-circle" size={28} color={color} />
           ),
         }}
       />

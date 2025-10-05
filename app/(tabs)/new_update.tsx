@@ -13,7 +13,7 @@ export default function NewUpdateScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>update</Text>
+        <Text style={styles.title}>new update</Text>
         <TouchableOpacity
           style={[styles.postButton, !updateText && styles.postButtonDisabled]}
           onPress={handlePost}
@@ -79,8 +79,8 @@ const styles = StyleSheet.create({
     borderBottomColor: "#E0E0E0",
   },
   title: {
-    fontSize: 28,
-    fontWeight: "600",
+    fontSize: 34,
+    fontWeight: "700",
     color: "#000000",
   },
   postButton: {

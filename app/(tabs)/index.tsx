@@ -1,10 +1,10 @@
+import { Colors } from "@/constants/Colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Update } from "@/types/database";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { Colors } from "@/constants/Colors";
 
 export default function FeedScreen() {
   const router = useRouter();
@@ -132,7 +132,7 @@ export default function FeedScreen() {
   const renderUpdate = ({ item }: { item: Update }) => (
     <TouchableOpacity
       style={styles.updateCard}
-      onPress={() => router.push(`/board/${item.group_id}`)}
+      onPress={() => router.push(`/group/${item.group_id}`)}
     >
       {isUnread(item) && <View style={styles.unreadDot} />}
       <View style={styles.updateRow}>

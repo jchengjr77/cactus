@@ -1,9 +1,9 @@
+import { Colors } from "@/constants/Colors";
 import { supabase } from "@/lib/supabase";
 import { Group } from "@/types/database";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { Colors } from "@/constants/Colors";
 
 interface GroupWithMembers extends Group {
   memberNames?: string[];
@@ -67,7 +67,7 @@ export default function GroupsScreen() {
     return (
       <TouchableOpacity
         style={styles.groupCard}
-        onPress={() => router.push(`/board/${item.id}`)}
+        onPress={() => router.push(`/group/${item.id}`)}
       >
         <View style={styles.groupHeader}>
           <Text style={styles.groupName}>
@@ -125,7 +125,7 @@ export default function GroupsScreen() {
   const renderCreateCard = () => (
     <TouchableOpacity
       style={styles.createCard}
-      onPress={() => router.push("/create_board")}
+      onPress={() => router.push("/group/create_group")}
     >
       <View style={styles.createCardContent}>
         <Text style={styles.createCardText}>+ new group</Text>

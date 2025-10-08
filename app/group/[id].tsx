@@ -1,8 +1,8 @@
 import { supabase } from "@/lib/supabase";
 import { Group, Update } from "@/types/database";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Colors } from "@/constants/Colors";
 
@@ -37,6 +37,15 @@ export default function GroupBoardScreen() {
       fetchUpdates(true);
     }
   }, [selectedAuthor]);
+
+  // Refetch group data when screen comes into focus (e.g., returning from settings)
+  useFocusEffect(
+    useCallback(() => {
+      if (id) {
+        fetchGroupData();
+      }
+    }, [id])
+  );
 
   const fetchGroupData = async () => {
     try {
@@ -193,7 +202,7 @@ export default function GroupBoardScreen() {
               </View>
             )}
           </View>
-          <TouchableOpacity style={styles.settingsButton} onPress={() => {/* TODO: Navigate to settings */}}>
+          <TouchableOpacity style={styles.settingsButton} onPress={() => router.push(`/group/settings?id=${id}`)}>
             <MaterialIcons name="settings" size={24} color="#666666" />
           </TouchableOpacity>
         </View>
@@ -213,10 +222,9 @@ export default function GroupBoardScreen() {
             </View>
             <View style={styles.infoDivider} />
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Stake</Text>
+              <Text style={styles.infoLabel}>Points</Text>
               <Text style={styles.infoValue}>
-                {group.stake_name ? `${group.stake_name} ` : ''}
-                <Text style={styles.stakeAmount}>${group.stake}</Text>
+                <Text style={styles.pointsAmount}>{group.points || 0}</Text>
               </Text>
             </View>
           </View>
@@ -357,7 +365,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: Colors.black,
   },
-  stakeAmount: {
+  pointsAmount: {
     color: Colors.brandGreen,
   },
   infoDivider: {

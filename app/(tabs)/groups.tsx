@@ -109,10 +109,15 @@ export default function GroupsScreen() {
           <Text style={styles.groupName}>
             {item.emoji_icon ? `${item.emoji_icon} ` : ''}{item.name}
           </Text>
-          {!item.is_active && (
+          {!item.is_active ? (
             <View style={styles.inactiveBadge}>
               <Text style={styles.inactiveBadgeText}>inactive</Text>
             </View>
+          ) : (
+            <Text style={styles.pointsDisplay}>
+              <Text style={styles.pointsAmount}>{item.points || 0}</Text>
+              <Text style={styles.pointsLabel}> pts</Text>
+            </Text>
           )}
         </View>
 
@@ -127,14 +132,6 @@ export default function GroupsScreen() {
                 : item.cadence_hrs === 168
                 ? "Weekly"
                 : `Every ${Math.floor(item.cadence_hrs / 24)}d`}
-            </Text>
-          </View>
-
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Stake</Text>
-            <Text style={styles.detailValue}>
-              {item.stake_name ? `${item.stake_name} ` : ''}
-              <Text style={styles.stakeAmount}>${item.stake}</Text>
             </Text>
           </View>
 
@@ -315,8 +312,16 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: Colors.black,
   },
-  stakeAmount: {
+  pointsDisplay: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  pointsAmount: {
     color: Colors.brandGreen,
+  },
+  pointsLabel: {
+    color: "#999999",
+    fontSize: 14,
   },
   membersRow: {
     flexDirection: "row",

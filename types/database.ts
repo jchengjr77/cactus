@@ -6,9 +6,7 @@ export interface Group {
   emoji_icon: string | null;
   cadence_hrs: number;
   updates_due: string | null;
-  stake: number;
-  stake_name: string | null;
-  tab_id: number | null;
+  points: number;
   members: number[]; // Array of user IDs
   emails_invited: string[]; // Array of invited emails
 }

@@ -92,7 +92,7 @@ export default function CreateGroupScreen() {
 			.single();
 
 		if (!user) {
-			setEmailError("no cactus account found for this email");
+			setEmailError("no account found for this email");
 			return;
 		}
 

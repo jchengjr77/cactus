@@ -18,6 +18,7 @@ export default function FeedScreen() {
   const [initialUnreadIds, setInitialUnreadIds] = useState<Set<number>>(new Set());
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
+  const [hasGroups, setHasGroups] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -63,6 +64,32 @@ export default function FeedScreen() {
 
       const currentOffset = refresh ? 0 : offset;
 
+      // First, get groups where user is a member
+      const { data: userGroups, error: groupsError } = await supabase
+        .from('groups')
+        .select('id')
+        .contains('members', [currentUserId]);
+
+      if (groupsError) {
+        console.error('Error fetching user groups:', groupsError);
+        return;
+      }
+
+      const groupIds = (userGroups || []).map(g => g.id);
+
+      // Track if user has groups
+      setHasGroups(groupIds.length > 0);
+
+      // If user is not a member of any groups, return empty
+      if (groupIds.length === 0) {
+        setUpdates([]);
+        setHasMore(false);
+        setLoading(false);
+        setLoadingMore(false);
+        return;
+      }
+
+      // Fetch updates only from groups where user is a member
       const { data, error } = await supabase
         .from('updates')
         .select(`
@@ -70,6 +97,7 @@ export default function FeedScreen() {
           users!author(name, avatar_color),
           groups!parent_group_id(name, emoji_icon)
         `)
+        .in('parent_group_id', groupIds)
         .order('created_at', { ascending: false })
         .range(currentOffset, currentOffset + PAGE_SIZE - 1);
 
@@ -230,12 +258,16 @@ export default function FeedScreen() {
         ListFooterComponent={renderFooter}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <TouchableOpacity
-              style={styles.createGroupButton}
-              onPress={() => router.push("/(tabs)/groups")}
-            >
-              <Text style={styles.createGroupButtonText}>+ create a group</Text>
-            </TouchableOpacity>
+            {hasGroups ? (
+              <Text style={styles.emptyStateText}>all quiet on the western front</Text>
+            ) : (
+              <TouchableOpacity
+                style={styles.createGroupButton}
+                onPress={() => router.push("/(tabs)/groups")}
+              >
+                <Text style={styles.createGroupButtonText}>+ create a group</Text>
+              </TouchableOpacity>
+            )}
           </View>
         }
       />
@@ -283,9 +315,9 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
-    paddingVertical: 64,
+    paddingTop: 120,
     paddingHorizontal: 32,
   },
   createGroupButton: {
@@ -299,6 +331,10 @@ const styles = StyleSheet.create({
   createGroupButtonText: {
     fontSize: 16,
     fontWeight: "600",
+    color: "#999999",
+  },
+  emptyStateText: {
+    fontSize: 16,
     color: "#999999",
   },
   updateCard: {

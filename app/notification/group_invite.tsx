@@ -13,6 +13,7 @@ export default function GroupInviteScreen() {
 	const [notification, setNotification] = useState<Notification | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [processing, setProcessing] = useState(false);
+	const [isAlreadyMember, setIsAlreadyMember] = useState(false);
 
 	useEffect(() => {
 		fetchNotification();
@@ -32,6 +33,27 @@ export default function GroupInviteScreen() {
 			}
 
 			setNotification(data);
+
+			// Check if user is already a member of the group
+			if (data && user?.email) {
+				const { data: userData } = await supabase
+					.from('users')
+					.select('id')
+					.eq('email', user.email)
+					.single();
+
+				if (userData) {
+					const { data: groupData } = await supabase
+						.from('groups')
+						.select('members')
+						.eq('id', data.data.group_id)
+						.single();
+
+					if (groupData && groupData.members.includes(userData.id)) {
+						setIsAlreadyMember(true);
+					}
+				}
+			}
 		} catch (error) {
 			console.error('Error:', error);
 		} finally {
@@ -71,11 +93,15 @@ export default function GroupInviteScreen() {
 				// Remove user's email from emails_invited and add to members
 				const updatedEmailsInvited = currentEmailsInvited.filter(email => email !== user.email);
 
+				// Mark group as active if all invited users have accepted
+				const isActive = updatedEmailsInvited.length === 0;
+
 				const { error: updateError } = await supabase
 					.from('groups')
 					.update({
 						members: [...currentMembers, userData.id],
-						emails_invited: updatedEmailsInvited
+						emails_invited: updatedEmailsInvited,
+						is_active: isActive
 					})
 					.eq('id', notification.data.group_id);
 
@@ -85,8 +111,12 @@ export default function GroupInviteScreen() {
 				}
 			}
 
-			// Navigate to the group page
-			router.push(`/group/${notification.data.group_id}`);
+			// Navigate to groups page, then to the specific group
+			router.replace('/(tabs)/groups');
+			// Use setTimeout to ensure the groups page is loaded before navigating to the group
+			setTimeout(() => {
+				router.push(`/group/${notification.data.group_id}`);
+			}, 100);
 		} catch (error) {
 			console.error('Error accepting invitation:', error);
 		} finally {
@@ -135,12 +165,19 @@ export default function GroupInviteScreen() {
 
 				<View style={styles.actions}>
 					<TouchableOpacity
-						style={[styles.button, styles.acceptButton]}
+						style={[
+							styles.button,
+							styles.acceptButton,
+							isAlreadyMember && styles.acceptButtonDisabled
+						]}
 						onPress={handleAccept}
-						disabled={processing}
+						disabled={processing || isAlreadyMember}
 					>
-						<Text style={styles.acceptButtonText}>
-							{processing ? "accepting..." : "accept"}
+						<Text style={[
+							styles.acceptButtonText,
+							isAlreadyMember && styles.acceptButtonTextDisabled
+						]}>
+							{isAlreadyMember ? "already joined" : processing ? "accepting..." : "accept"}
 						</Text>
 					</TouchableOpacity>
 				</View>
@@ -208,10 +245,16 @@ const styles = StyleSheet.create({
 	acceptButton: {
 		backgroundColor: Colors.brandGreen,
 	},
+	acceptButtonDisabled: {
+		backgroundColor: Colors.lightGrey,
+	},
 	acceptButtonText: {
 		fontSize: 16,
 		fontWeight: "600",
 		color: Colors.background,
+	},
+	acceptButtonTextDisabled: {
+		color: "#999999",
 	},
 	loadingContainer: {
 		flex: 1,

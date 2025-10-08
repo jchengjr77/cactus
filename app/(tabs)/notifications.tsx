@@ -155,7 +155,10 @@ export default function NotificationsScreen() {
         <View style={styles.notificationContent}>
           <View style={styles.notificationHeader}>
             <Text style={styles.notificationTitle}>{title}</Text>
-            <Text style={styles.notificationTime}>{formatTime(item.created_at)}</Text>
+            <View style={styles.timestampContainer}>
+              <Text style={styles.notificationTime}>{formatTime(item.created_at)}</Text>
+              {!item.opened && <View style={styles.unreadDot} />}
+            </View>
           </View>
           <Text style={styles.notificationMessage}>{message}</Text>
         </View>
@@ -195,7 +198,7 @@ export default function NotificationsScreen() {
         ListFooterComponent={renderFooter}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>no notifications yet</Text>
+            <Text style={styles.emptyStateText}>don't worry, i'm sure something'll pop up</Text>
           </View>
         }
       />
@@ -236,10 +239,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "#FFFFFF",
     gap: 12,
+    position: "relative",
   },
   notificationUnread: {
     backgroundColor: "#FFF5E6",
     borderColor: Colors.highlight,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.highlight,
   },
   notificationContent: {
     flex: 1,
@@ -255,6 +265,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000000",
   },
+  timestampContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   notificationTime: {
     fontSize: 12,
     color: "#999999",
@@ -264,13 +279,6 @@ const styles = StyleSheet.create({
     color: "#666666",
     lineHeight: 20,
   },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#4A7C59",
-    marginTop: 4,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -278,9 +286,10 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
-    paddingVertical: 64,
+    paddingTop: 120,
+    paddingHorizontal: 32,
   },
   emptyStateText: {
     fontSize: 16,

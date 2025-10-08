@@ -9,7 +9,8 @@ export interface Group {
   stake: number;
   stake_name: string | null;
   tab_id: number | null;
-  members: string[]; // Array of user UUIDs
+  members: number[]; // Array of user IDs
+  emails_invited: string[]; // Array of invited emails
 }
 
 export interface User {
@@ -35,4 +36,26 @@ export interface Update {
   user_avatar_color?: string | null;
   group_name?: string;
   group_emoji?: string | null;
+}
+
+export type NotificationType =
+  | 'group_invite'
+  | 'group_settings_change'
+  | 'group_members_change'
+  | 'new_update'
+  | 'new_comment'
+  | 'new_reaction'
+  | 'update_due'
+  | 'update_missed_self'
+  | 'update_missed_other'
+  | 'group_streak'
+  | 'group_reward';
+
+export interface Notification {
+  id: number;
+  created_at: string;
+  notification_type: NotificationType;
+  data: any;
+  user: number;
+  opened: boolean;
 }

@@ -1,4 +1,5 @@
 import { Colors } from "@/constants/Colors";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Group } from "@/types/database";
 import { useRouter } from "expo-router";
@@ -11,14 +12,44 @@ interface GroupWithMembers extends Group {
 
 export default function GroupsScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [groups, setGroups] = useState<GroupWithMembers[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchGroups();
-  }, []);
+    if (user) {
+      fetchCurrentUser();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (currentUserId !== null) {
+      fetchGroups();
+    }
+  }, [currentUserId]);
+
+  const fetchCurrentUser = async () => {
+    if (!user?.email) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', user.email)
+        .single();
+
+      if (data && !error) {
+        setCurrentUserId(data.id);
+      }
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+    }
+  };
 
   const fetchGroups = async () => {
+    if (currentUserId === null) return;
+
     try {
       setLoading(true);
 
@@ -32,9 +63,14 @@ export default function GroupsScreen() {
         return;
       }
 
+      // Filter groups where current user is a member
+      const userGroups = (data || []).filter(group =>
+        group.members && group.members.includes(currentUserId)
+      );
+
       // Fetch member names for each group
       const groupsWithMembers = await Promise.all(
-        (data || []).map(async (group) => {
+        userGroups.map(async (group) => {
           const memberIds = group.members || [];
 
           if (memberIds.length === 0) {

@@ -113,8 +113,23 @@ export default function CreateGroupScreen() {
 	const handleCreate = async () => {
 		setCreating(true);
 
-		const memberIds = members.map(m => m.userId).filter((id): id is number => id !== undefined);
+		// Get current user's ID
+		const { data: currentUserData } = await supabase
+			.from('users')
+			.select('id')
+			.eq('email', user?.email)
+			.single();
 
+		if (!currentUserData) {
+			setCreating(false);
+			return;
+		}
+
+		// Get invited emails (excluding creator)
+		const invitedMembers = members.filter(m => m.userId !== currentUserData.id);
+		const invitedEmails = invitedMembers.map(m => m.email);
+
+		// Only add the creator to the members array, add others to emails_invited
 		const { data, error } = await supabase
 			.from('groups')
 			.insert([
@@ -125,16 +140,37 @@ export default function CreateGroupScreen() {
 					stake: stakeAmount,
 					stake_name: stakeName,
 					emoji_icon: groupEmoji,
-					members: memberIds
+					members: [currentUserData.id],
+					emails_invited: invitedEmails
 				},
 			])
 			.select();
 
-		setCreating(false);
+		if (!error && data && data.length > 0) {
+			const createdGroup = data[0];
 
-		if (!error && data) {
+			// Create notifications for invited users
+			if (invitedMembers.length > 0) {
+				const notifications = invitedMembers.map(member => ({
+					notification_type: 'group_invite',
+					user: member.userId,
+					data: {
+						group_id: createdGroup.id,
+						group_name: createdGroup.name,
+						group_emoji: createdGroup.emoji_icon,
+						invited_by: currentUserData.id
+					}
+				}));
+
+				await supabase
+					.from('notifications')
+					.insert(notifications);
+			}
+
 			setShowSuccess(true);
 		}
+
+		setCreating(false);
 	}
 
 	if (showSuccess) {

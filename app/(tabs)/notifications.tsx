@@ -1,64 +1,204 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { Notification } from "@/types/database";
+import { useRouter } from "expo-router";
+import { Colors } from "@/constants/Colors";
 
-const MOCK_NOTIFICATIONS = [
-  {
-    id: 1,
-    type: "deadline",
-    title: "update due soon",
-    message: "college crew update due in 2 hours",
-    time: "2h",
-    unread: true,
-  },
-  {
-    id: 2,
-    type: "update",
-    title: "new update",
-    message: "Sarah posted to family",
-    time: "5h",
-    unread: true,
-  },
-  {
-    id: 3,
-    type: "charge",
-    title: "penalty charged",
-    message: "Missed update in roommates - $5 coffee added to tab",
-    time: "1d",
-    unread: false,
-  },
-  {
-    id: 4,
-    type: "update",
-    title: "new update",
-    message: "Mike posted to college crew",
-    time: "2d",
-    unread: false,
-  },
-];
+const PAGE_SIZE = 20;
 
 export default function NotificationsScreen() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
+
+  useEffect(() => {
+    fetchNotifications(true);
+  }, [user]);
+
+  const fetchNotifications = async (refresh: boolean = false) => {
+    if (!user?.email) return;
+
+    try {
+      if (refresh) {
+        setLoading(true);
+        setOffset(0);
+        setHasMore(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const currentOffset = refresh ? 0 : offset;
+
+      // Get user ID
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', user.email)
+        .single();
+
+      if (!userData) return;
+
+      // Fetch notifications for this user
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user', userData.id)
+        .order('created_at', { ascending: false })
+        .range(currentOffset, currentOffset + PAGE_SIZE - 1);
+
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        return;
+      }
+
+      const fetchedNotifications = data || [];
+
+      // Check if there's more data to load
+      setHasMore(fetchedNotifications.length === PAGE_SIZE);
+
+      if (refresh) {
+        setNotifications(fetchedNotifications);
+        setOffset(PAGE_SIZE);
+      } else {
+        // Append to existing notifications
+        setNotifications(prev => [...prev, ...fetchedNotifications]);
+        setOffset(currentOffset + PAGE_SIZE);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const formatTime = (timestamp: string) => {
+    const now = new Date();
+    const notifTime = new Date(timestamp);
+    const diffMs = now.getTime() - notifTime.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    return `${diffDays}d`;
+  };
+
+  const getNotificationText = (notification: Notification) => {
+    switch (notification.notification_type) {
+      case 'group_invite':
+        return {
+          title: 'group invitation',
+          message: `You've been invited to join ${notification.data.group_emoji} ${notification.data.group_name}`
+        };
+      default:
+        return {
+          title: notification.notification_type.replace(/_/g, ' '),
+          message: 'New notification'
+        };
+    }
+  };
+
+  const handleNotificationPress = async (notification: Notification) => {
+    // Mark notification as opened
+    await supabase
+      .from('notifications')
+      .update({ opened: true })
+      .eq('id', notification.id);
+
+    // Update local state
+    setNotifications(prevNotifications =>
+      prevNotifications.map(n =>
+        n.id === notification.id ? { ...n, opened: true } : n
+      )
+    );
+
+    // Navigate based on notification type
+    if (notification.notification_type === 'group_invite') {
+      router.push(`/notification/group_invite?id=${notification.id}`);
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchNotifications(false);
+    }
+  };
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color="#4A7C59" />
+      </View>
+    );
+  };
+
+  const renderNotification = ({ item }: { item: Notification }) => {
+    const { title, message } = getNotificationText(item);
+    return (
+      <TouchableOpacity
+        key={item.id}
+        style={[
+          styles.notificationCard,
+          !item.opened && styles.notificationUnread
+        ]}
+        onPress={() => handleNotificationPress(item)}
+      >
+        <View style={styles.notificationContent}>
+          <View style={styles.notificationHeader}>
+            <Text style={styles.notificationTitle}>{title}</Text>
+            <Text style={styles.notificationTime}>{formatTime(item.created_at)}</Text>
+          </View>
+          <Text style={styles.notificationMessage}>{message}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>notifications</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4A7C59" />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>notifications</Text>
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        {MOCK_NOTIFICATIONS.map((notification) => (
-          <TouchableOpacity
-            key={notification.id}
-            style={[styles.notificationCard, notification.unread && styles.notificationUnread]}
-          >
-            <View style={styles.notificationContent}>
-              <View style={styles.notificationHeader}>
-                <Text style={styles.notificationTitle}>{notification.title}</Text>
-                <Text style={styles.notificationTime}>{notification.time}</Text>
-              </View>
-              <Text style={styles.notificationMessage}>{notification.message}</Text>
-            </View>
-            {notification.unread && <View style={styles.unreadDot} />}
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <FlatList
+        data={notifications}
+        renderItem={renderNotification}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={notifications.length === 0 ? styles.emptyListContent : styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+        refreshing={loading}
+        onRefresh={() => fetchNotifications(true)}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>no notifications yet</Text>
+          </View>
+        }
+      />
     </View>
   );
 }
@@ -80,12 +220,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#000000",
   },
-  content: {
-    flex: 1,
-  },
   contentContainer: {
     padding: 24,
     gap: 12,
+  },
+  emptyListContent: {
+    flex: 1,
   },
   notificationCard: {
     flexDirection: "row",
@@ -98,8 +238,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   notificationUnread: {
-    backgroundColor: "#F5F9F7",
-    borderColor: "#4A7C59",
+    backgroundColor: "#FFF5E6",
+    borderColor: Colors.highlight,
   },
   notificationContent: {
     flex: 1,
@@ -130,5 +270,24 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: "#4A7C59",
     marginTop: 4,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 64,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: "#999999",
+  },
+  footerLoader: {
+    paddingVertical: 20,
+    alignItems: "center",
   },
 });

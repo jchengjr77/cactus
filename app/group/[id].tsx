@@ -11,25 +11,30 @@ interface UpdateWithUser extends Update {
   user_avatar_color?: string | null;
 }
 
+const PAGE_SIZE = 20;
+
 export default function GroupBoardScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const [group, setGroup] = useState<Group | null>(null);
   const [updates, setUpdates] = useState<UpdateWithUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<number | null>(null);
   const [authors, setAuthors] = useState<{ id: number; name: string }[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
 
   useEffect(() => {
     if (id) {
       fetchGroupData();
-      fetchUpdates();
+      fetchUpdates(true);
     }
   }, [id]);
 
   useEffect(() => {
     if (id) {
-      fetchUpdates();
+      fetchUpdates(true);
     }
   }, [selectedAuthor]);
 
@@ -67,15 +72,24 @@ export default function GroupBoardScreen() {
     }
   };
 
-  const fetchUpdates = async () => {
+  const fetchUpdates = async (refresh: boolean = false) => {
     try {
-      setLoading(true);
+      if (refresh) {
+        setLoading(true);
+        setOffset(0);
+        setHasMore(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const currentOffset = refresh ? 0 : offset;
 
       let query = supabase
         .from('updates')
         .select('*, users!inner(name, avatar_color)')
         .eq('parent_group_id', id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(currentOffset, currentOffset + PAGE_SIZE - 1);
 
       if (selectedAuthor !== null) {
         query = query.eq('author', selectedAuthor);
@@ -101,12 +115,38 @@ export default function GroupBoardScreen() {
         user_avatar_color: item.users?.avatar_color || null,
       }));
 
-      setUpdates(transformedUpdates);
+      // Check if there's more data to load
+      setHasMore(transformedUpdates.length === PAGE_SIZE);
+
+      if (refresh) {
+        setUpdates(transformedUpdates);
+        setOffset(PAGE_SIZE);
+      } else {
+        // Append to existing updates
+        setUpdates(prev => [...prev, ...transformedUpdates]);
+        setOffset(currentOffset + PAGE_SIZE);
+      }
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchUpdates(false);
+    }
+  };
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color="#4A7C59" />
+      </View>
+    );
   };
 
   const renderUpdate = ({ item }: { item: UpdateWithUser }) => (
@@ -219,7 +259,10 @@ export default function GroupBoardScreen() {
         contentContainerStyle={updates.length === 0 ? styles.emptyListContent : styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshing={loading}
-        onRefresh={fetchUpdates}
+        onRefresh={() => fetchUpdates(true)}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>no updates yet</Text>
@@ -426,6 +469,10 @@ const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
+    alignItems: "center",
+  },
+  footerLoader: {
+    paddingVertical: 20,
     alignItems: "center",
   },
 });

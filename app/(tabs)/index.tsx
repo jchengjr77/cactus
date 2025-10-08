@@ -6,13 +6,18 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+const PAGE_SIZE = 20;
+
 export default function FeedScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const [updates, setUpdates] = useState<Update[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [initialUnreadIds, setInitialUnreadIds] = useState<Set<number>>(new Set());
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -22,7 +27,7 @@ export default function FeedScreen() {
 
   useEffect(() => {
     if (currentUserId !== null) {
-      fetchUpdates();
+      fetchUpdates(true);
     }
   }, [currentUserId]);
 
@@ -44,11 +49,19 @@ export default function FeedScreen() {
     }
   };
 
-  const fetchUpdates = async () => {
+  const fetchUpdates = async (refresh: boolean = false) => {
     if (currentUserId === null) return;
 
     try {
-      setLoading(true);
+      if (refresh) {
+        setLoading(true);
+        setOffset(0);
+        setHasMore(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const currentOffset = refresh ? 0 : offset;
 
       const { data, error } = await supabase
         .from('updates')
@@ -58,7 +71,7 @@ export default function FeedScreen() {
           groups!parent_group_id(name, emoji_icon)
         `)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .range(currentOffset, currentOffset + PAGE_SIZE - 1);
 
       if (error) {
         console.error('Error fetching updates:', error);
@@ -81,22 +94,36 @@ export default function FeedScreen() {
         group_emoji: item.groups?.emoji_icon || null,
       }));
 
-      // Store IDs of initially unread updates
-      const unreadIds = new Set(
-        transformedUpdates
-          .filter(update => !update.read_by.includes(currentUserId))
-          .map(update => update.id)
-      );
-      setInitialUnreadIds(unreadIds);
+      // Check if there's more data to load
+      setHasMore(transformedUpdates.length === PAGE_SIZE);
 
-      setUpdates(transformedUpdates);
+      if (refresh) {
+        // Store IDs of initially unread updates
+        const unreadIds = new Set(
+          transformedUpdates
+            .filter(update => !update.read_by.includes(currentUserId))
+            .map(update => update.id)
+        );
+        setInitialUnreadIds(unreadIds);
 
-      // Mark all updates as read in the database (but keep UI showing them as unread)
-      await markAllAsRead(transformedUpdates);
+        setUpdates(transformedUpdates);
+        setOffset(PAGE_SIZE);
+
+        // Mark all updates as read in the database (but keep UI showing them as unread)
+        await markAllAsRead(transformedUpdates);
+      } else {
+        // Append to existing updates
+        setUpdates(prev => [...prev, ...transformedUpdates]);
+        setOffset(currentOffset + PAGE_SIZE);
+
+        // Mark new updates as read
+        await markAllAsRead(transformedUpdates);
+      }
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -127,6 +154,21 @@ export default function FeedScreen() {
 
   const getFirstName = (fullName: string): string => {
     return fullName.split(' ')[0];
+  };
+
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchUpdates(false);
+    }
+  };
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color="#4A7C59" />
+      </View>
+    );
   };
 
   const renderUpdate = ({ item }: { item: Update }) => (
@@ -182,7 +224,10 @@ export default function FeedScreen() {
         contentContainerStyle={updates.length === 0 ? styles.emptyListContent : styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshing={loading}
-        onRefresh={fetchUpdates}
+        onRefresh={() => fetchUpdates(true)}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <TouchableOpacity
@@ -323,6 +368,10 @@ const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
+    alignItems: "center",
+  },
+  footerLoader: {
+    paddingVertical: 20,
     alignItems: "center",
   },
 });

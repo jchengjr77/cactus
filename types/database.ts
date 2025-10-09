@@ -27,6 +27,7 @@ export interface Update {
   group_id: number; // Maps to 'parent_group_id' in database
   content: string;
   read_by: number[]; // Array of user IDs who have read this update
+  comments: number[]; // Array of comment IDs attached to this update
   media_url?: string | null;
   media_type?: 'photo' | 'video' | 'voice' | null;
   // Joined data
@@ -34,6 +35,7 @@ export interface Update {
   user_avatar_color?: string | null;
   group_name?: string;
   group_emoji?: string | null;
+  comment_count?: number;
 }
 
 export type NotificationType =
@@ -56,4 +58,15 @@ export interface Notification {
   data: any;
   user: number;
   opened: boolean;
+}
+
+export interface Comment {
+  id: number;
+  created_at: string;
+  content: string;
+  update: number; // Maps to 'update' in database (parent update ID)
+  user: number; // Maps to 'user' in database (author user ID)
+  // Joined data
+  user_name?: string;
+  user_avatar_color?: string | null;
 }

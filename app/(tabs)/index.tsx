@@ -114,12 +114,14 @@ export default function FeedScreen() {
         group_id: item.parent_group_id,
         content: item.content,
         read_by: item.read_by || [],
+        comments: item.comments || [],
         media_url: item.media_url,
         media_type: item.media_type,
         user_name: item.users?.name || 'Unknown',
         user_avatar_color: item.users?.avatar_color || null,
         group_name: item.groups?.name || 'Unknown',
         group_emoji: item.groups?.emoji_icon || null,
+        comment_count: (item.comments || []).length,
       }));
 
       // Check if there's more data to load
@@ -202,7 +204,7 @@ export default function FeedScreen() {
   const renderUpdate = ({ item }: { item: Update }) => (
     <TouchableOpacity
       style={styles.updateCard}
-      onPress={() => router.push(`/group/${item.group_id}`)}
+      onPress={() => router.push(`/update/${item.id}`)}
     >
       {isUnread(item) && <View style={styles.unreadDot} />}
       <View style={styles.updateRow}>
@@ -221,6 +223,11 @@ export default function FeedScreen() {
             <Text style={styles.timestamp}>{formatTimeAgo(item.created_at)}</Text>
           </View>
           <Text style={styles.updateContent}>{item.content}</Text>
+          {item.comment_count !== undefined && (
+            <Text style={styles.commentCount}>
+              {item.comment_count} {item.comment_count === 1 ? 'comment' : 'comments'}
+            </Text>
+          )}
         </View>
       </View>
     </TouchableOpacity>
@@ -400,6 +407,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: Colors.black,
+  },
+  commentCount: {
+    fontSize: 13,
+    color: "#999999",
+    marginTop: 8,
   },
   loadingContainer: {
     flex: 1,

@@ -28,6 +28,7 @@ export interface Update {
   content: string;
   read_by: number[]; // Array of user IDs who have read this update
   comments: number[]; // Array of comment IDs attached to this update
+  reactions: number[]; // Array of reaction IDs attached to this update
   media_url?: string | null;
   media_type?: 'photo' | 'video' | 'voice' | null;
   // Joined data
@@ -35,6 +36,7 @@ export interface Update {
   user_avatar_color?: string | null;
   group_name?: string;
   group_emoji?: string | null;
+  group_points?: number;
   comment_count?: number;
 }
 
@@ -69,4 +71,19 @@ export interface Comment {
   // Joined data
   user_name?: string;
   user_avatar_color?: string | null;
+}
+
+export interface Reaction {
+  id: number;
+  created_at: string;
+  user: number; // User ID who reacted
+  update: number; // Update ID that was reacted to
+  reaction: string; // The reaction emoji/type
+}
+
+export interface ReactionPack {
+  id: number;
+  pack_name: string;
+  reactions: string[]; // Array of reaction emojis in this pack
+  unlock_threshold: number; // Points needed to unlock this pack
 }

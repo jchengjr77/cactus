@@ -5,6 +5,7 @@ import { Update } from "@/types/database";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Reactions from "@/components/Reactions";
 
 const PAGE_SIZE = 20;
 
@@ -95,7 +96,7 @@ export default function FeedScreen() {
         .select(`
           *,
           users!author(name, avatar_color),
-          groups!parent_group_id(name, emoji_icon)
+          groups!parent_group_id(name, emoji_icon, points)
         `)
         .in('parent_group_id', groupIds)
         .order('created_at', { ascending: false })
@@ -115,12 +116,14 @@ export default function FeedScreen() {
         content: item.content,
         read_by: item.read_by || [],
         comments: item.comments || [],
+        reactions: item.reactions || [],
         media_url: item.media_url,
         media_type: item.media_type,
         user_name: item.users?.name || 'Unknown',
         user_avatar_color: item.users?.avatar_color || null,
         group_name: item.groups?.name || 'Unknown',
         group_emoji: item.groups?.emoji_icon || null,
+        group_points: item.groups?.points || 0,
         comment_count: (item.comments || []).length,
       }));
 
@@ -223,11 +226,21 @@ export default function FeedScreen() {
             <Text style={styles.timestamp}>{formatTimeAgo(item.created_at)}</Text>
           </View>
           <Text style={styles.updateContent}>{item.content}</Text>
-          {item.comment_count !== undefined && (
-            <Text style={styles.commentCount}>
-              {item.comment_count} {item.comment_count === 1 ? 'comment' : 'comments'}
-            </Text>
-          )}
+          <View style={styles.bottomRow}>
+            <View onStartShouldSetResponder={() => true} style={styles.reactionsWrapper}>
+              <Reactions
+                reactionIds={item.reactions}
+                updateId={item.id}
+                groupPoints={item.group_points || 0}
+                onReactionAdded={() => fetchUpdates(true)}
+              />
+            </View>
+            {item.comment_count !== undefined && (
+              <Text style={styles.commentCount}>
+                {item.comment_count} {item.comment_count === 1 ? 'comment' : 'comments'}
+              </Text>
+            )}
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -404,14 +417,26 @@ const styles = StyleSheet.create({
     color: "#999999",
   },
   updateContent: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 18,
+    lineHeight: 26,
     color: Colors.black,
+  },
+  bottomRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginTop: 2,
+    gap: 8,
+  },
+  reactionsWrapper: {
+    flex: 1,
+    minWidth: 0,
   },
   commentCount: {
     fontSize: 13,
     color: "#999999",
-    marginTop: 8,
+    flexShrink: 0,
+    paddingTop: 4,
   },
   loadingContainer: {
     flex: 1,

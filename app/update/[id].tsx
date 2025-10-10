@@ -1,0 +1,565 @@
+import { Colors } from "@/constants/Colors";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { Comment, Update } from "@/types/database";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+	ActivityIndicator,
+	FlatList,
+	KeyboardAvoidingView,
+	Platform,
+	ScrollView,
+	StyleSheet,
+	Text,
+	TextInput,
+	TouchableOpacity,
+	View,
+} from "react-native";
+import Reactions from "@/components/Reactions";
+
+interface UpdateWithUser extends Update {
+	user_name: string;
+	user_avatar_color?: string | null;
+}
+
+interface CommentWithUser extends Comment {
+	user_name: string;
+	user_avatar_color?: string | null;
+}
+
+const PAGE_SIZE = 20;
+
+export default function UpdateDetailsScreen() {
+	const router = useRouter();
+	const { user } = useAuth();
+	const { id } = useLocalSearchParams();
+	const [update, setUpdate] = useState<UpdateWithUser | null>(null);
+	const [comments, setComments] = useState<CommentWithUser[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [loadingMore, setLoadingMore] = useState(false);
+	const [hasMore, setHasMore] = useState(true);
+	const [offset, setOffset] = useState(0);
+	const [commentInput, setCommentInput] = useState("");
+	const [submitting, setSubmitting] = useState(false);
+	const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+	const [groupPoints, setGroupPoints] = useState<number>(0);
+
+	useEffect(() => {
+		if (user?.email) {
+			fetchCurrentUser();
+		}
+	}, [user]);
+
+	useEffect(() => {
+		if (id) {
+			fetchUpdate();
+			fetchComments(true);
+		}
+	}, [id]);
+
+	const fetchCurrentUser = async () => {
+		if (!user?.email) return;
+
+		try {
+			const { data } = await supabase
+				.from("users")
+				.select("id")
+				.eq("email", user.email)
+				.single();
+
+			if (data) {
+				setCurrentUserId(data.id);
+			}
+		} catch (error) {
+			console.error("Error fetching current user:", error);
+		}
+	};
+
+	const fetchUpdate = async () => {
+		try {
+			const { data, error } = await supabase
+				.from("updates")
+				.select("*, users!inner(name, avatar_color), groups!parent_group_id(points)")
+				.eq("id", id)
+				.single();
+
+			if (error) {
+				console.error("Error fetching update:", error);
+				return;
+			}
+
+			if (data) {
+				const transformedUpdate: UpdateWithUser = {
+					id: data.id,
+					created_at: data.created_at,
+					user_id: data.author,
+					group_id: data.parent_group_id,
+					content: data.content,
+					read_by: data.read_by || [],
+					comments: data.comments || [],
+					reactions: data.reactions || [],
+					media_url: data.media_url,
+					media_type: data.media_type,
+					user_name: data.users?.name || "Unknown",
+					user_avatar_color: data.users?.avatar_color || null,
+				};
+				setUpdate(transformedUpdate);
+				setGroupPoints(data.groups?.points || 0);
+			}
+		} catch (error) {
+			console.error("Error:", error);
+		}
+	};
+
+	const fetchComments = async (refresh: boolean = false) => {
+		try {
+			if (refresh) {
+				setLoading(true);
+				setOffset(0);
+				setHasMore(true);
+			} else {
+				setLoadingMore(true);
+			}
+
+			const currentOffset = refresh ? 0 : offset;
+
+			const { data, error } = await supabase
+				.from("comments")
+				.select("*, users!inner(name, avatar_color)")
+				.eq("update", id)
+				.order("created_at", { ascending: true })
+				.range(currentOffset, currentOffset + PAGE_SIZE - 1);
+
+			if (error) {
+				console.error("Error fetching comments:", error);
+				return;
+			}
+
+			const transformedComments: CommentWithUser[] = (data || []).map(
+				(item: any) => ({
+					id: item.id,
+					created_at: item.created_at,
+					content: item.content,
+					update: item.update,
+					user: item.user,
+					user_name: item.users?.name || "Unknown",
+					user_avatar_color: item.users?.avatar_color || null,
+				})
+			);
+
+			setHasMore(transformedComments.length === PAGE_SIZE);
+
+			if (refresh) {
+				setComments(transformedComments);
+				setOffset(PAGE_SIZE);
+			} else {
+				setComments((prev) => [...prev, ...transformedComments]);
+				setOffset(currentOffset + PAGE_SIZE);
+			}
+		} catch (error) {
+			console.error("Error:", error);
+		} finally {
+			setLoading(false);
+			setLoadingMore(false);
+		}
+	};
+
+	const handleLoadMore = () => {
+		if (!loadingMore && hasMore) {
+			fetchComments(false);
+		}
+	};
+
+	const handleSubmitComment = async () => {
+		if (!commentInput.trim() || !currentUserId || submitting) return;
+
+		setSubmitting(true);
+
+		try {
+			// Insert the comment and get the created comment data
+			const { data: newComment, error: commentError } = await supabase
+				.from("comments")
+				.insert([
+					{
+						content: commentInput.trim(),
+						update: id,
+						user: currentUserId,
+					},
+				])
+				.select()
+				.single();
+
+			if (commentError || !newComment) {
+				console.error("Error submitting comment:", commentError);
+				return;
+			}
+
+			// Get the current update's comments array
+			const { data: currentUpdate, error: fetchError } = await supabase
+				.from("updates")
+				.select("comments")
+				.eq("id", id)
+				.single();
+
+			if (fetchError || !currentUpdate) {
+				console.error("Error fetching update:", fetchError);
+				return;
+			}
+
+			// Add the new comment ID to the update's comments array
+			const updatedComments = [...(currentUpdate.comments || []), newComment.id];
+
+			const { error: updateError } = await supabase
+				.from("updates")
+				.update({ comments: updatedComments })
+				.eq("id", id);
+
+			if (updateError) {
+				console.error("Error updating update's comments array:", updateError);
+				return;
+			}
+
+			setCommentInput("");
+			// Refresh comments to show the new one
+			fetchComments(true);
+		} catch (error) {
+			console.error("Error:", error);
+		} finally {
+			setSubmitting(false);
+		}
+	};
+
+	const renderFooter = () => {
+		if (!loadingMore) return null;
+		return (
+			<View style={styles.footerLoader}>
+				<ActivityIndicator size="small" color={Colors.brandGreen} />
+			</View>
+		);
+	};
+
+	const renderComment = ({ item }: { item: CommentWithUser }) => (
+		<View style={styles.commentCard}>
+			<View style={styles.commentRow}>
+				<View
+					style={[
+						styles.avatar,
+						{ backgroundColor: item.user_avatar_color || "#E0E0E0" },
+					]}
+				>
+					<Text style={styles.avatarText}>
+						{item.user_name?.[0]?.toUpperCase() || "U"}
+					</Text>
+				</View>
+				<View style={styles.commentContentWrapper}>
+					<View style={styles.commentHeader}>
+						<Text style={styles.userName}>{item.user_name}</Text>
+						<Text style={styles.timestamp}>{formatTimeAgo(item.created_at)}</Text>
+					</View>
+					<Text style={styles.commentContent}>{item.content}</Text>
+				</View>
+			</View>
+		</View>
+	);
+
+	if (loading || !update) {
+		return (
+			<View style={styles.container}>
+				<View style={styles.loadingContainer}>
+					<ActivityIndicator size="large" color={Colors.brandGreen} />
+				</View>
+			</View>
+		);
+	}
+
+	return (
+		<KeyboardAvoidingView
+			style={styles.container}
+			behavior={Platform.OS === "ios" ? "padding" : "height"}
+			keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+		>
+			<View style={styles.header}>
+				<TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+					<Text style={styles.backButtonText}>‹ back</Text>
+				</TouchableOpacity>
+				<Text style={styles.title}>update</Text>
+			</View>
+
+			<FlatList
+				data={comments}
+				renderItem={renderComment}
+				keyExtractor={(item) => item.id.toString()}
+				contentContainerStyle={styles.listContent}
+				showsVerticalScrollIndicator={false}
+				onEndReached={handleLoadMore}
+				onEndReachedThreshold={0.5}
+				ListFooterComponent={renderFooter}
+				ListHeaderComponent={
+					<>
+						<View style={styles.updateSection}>
+							<View style={styles.updateCard}>
+								<View style={styles.updateRow}>
+									<View
+										style={[
+											styles.avatar,
+											{ backgroundColor: update.user_avatar_color || "#E0E0E0" },
+										]}
+									>
+										<Text style={styles.avatarText}>
+											{update.user_name?.[0]?.toUpperCase() || "U"}
+										</Text>
+									</View>
+									<View style={styles.updateContentWrapper}>
+										<View style={styles.updateHeader}>
+											<Text style={styles.userName}>{update.user_name}</Text>
+											<Text style={styles.timestamp}>
+												{formatTimeAgo(update.created_at)}
+											</Text>
+										</View>
+										<Text style={styles.updateContent}>{update.content}</Text>
+										<View style={styles.reactionsContainer}>
+											<Reactions
+												reactionIds={update.reactions}
+												updateId={update.id}
+												groupPoints={groupPoints}
+												onReactionAdded={() => fetchUpdate()}
+											/>
+										</View>
+									</View>
+								</View>
+							</View>
+						</View>
+						<View style={styles.divider} />
+					</>
+				}
+				ListEmptyComponent={
+					<View style={styles.emptyState}>
+						<Text style={styles.emptyStateText}>no comments yet</Text>
+						<Text style={styles.emptyStateSubtext}>say what you wanna say</Text>
+					</View>
+				}
+			/>
+
+			<View style={styles.commentInputContainer}>
+				<TextInput
+					style={styles.commentInput}
+					value={commentInput}
+					onChangeText={setCommentInput}
+					placeholder="Add a comment..."
+					placeholderTextColor="#999"
+					multiline
+					maxLength={500}
+				/>
+				<TouchableOpacity
+					style={[
+						styles.submitButton,
+						(!commentInput.trim() || submitting) && styles.submitButtonDisabled,
+					]}
+					onPress={handleSubmitComment}
+					disabled={!commentInput.trim() || submitting}
+				>
+					<Text
+						style={[
+							styles.submitButtonText,
+							(!commentInput.trim() || submitting) &&
+								styles.submitButtonTextDisabled,
+						]}
+					>
+						{submitting ? "..." : "post"}
+					</Text>
+				</TouchableOpacity>
+			</View>
+		</KeyboardAvoidingView>
+	);
+}
+
+function formatTimeAgo(dateString: string): string {
+	const now = Date.now();
+	const past = new Date(dateString).getTime();
+	const diff = now - past;
+
+	const minutes = Math.floor(diff / (1000 * 60));
+	const hours = Math.floor(diff / (1000 * 60 * 60));
+	const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+	if (days > 0) return `${days}d ago`;
+	if (hours > 0) return `${hours}h ago`;
+	if (minutes > 0) return `${minutes}m ago`;
+	return "just now";
+}
+
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		backgroundColor: Colors.background,
+	},
+	header: {
+		paddingHorizontal: 24,
+		paddingTop: 60,
+		paddingBottom: 16,
+		borderBottomWidth: 1,
+		borderBottomColor: Colors.lightGrey,
+	},
+	backButton: {
+		marginBottom: 8,
+	},
+	backButtonText: {
+		fontSize: 16,
+		color: Colors.brandGreen,
+		fontWeight: "600",
+	},
+	title: {
+		fontSize: 34,
+		fontWeight: "700",
+		color: Colors.black,
+	},
+	loadingContainer: {
+		flex: 1,
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	listContent: {
+		paddingBottom: 16,
+	},
+	updateSection: {
+		paddingTop: 8,
+	},
+	updateCard: {
+		backgroundColor: Colors.background,
+		paddingHorizontal: 24,
+		paddingVertical: 16,
+	},
+	updateRow: {
+		flexDirection: "row",
+		gap: 12,
+	},
+	avatar: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	avatarText: {
+		fontSize: 16,
+		fontWeight: "600",
+		color: "#666666",
+	},
+	updateContentWrapper: {
+		flex: 1,
+		gap: 8,
+	},
+	updateHeader: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+	},
+	userName: {
+		fontSize: 15,
+		fontWeight: "600",
+		color: Colors.black,
+	},
+	timestamp: {
+		fontSize: 13,
+		color: "#999999",
+	},
+	updateContent: {
+		fontSize: 25,
+		lineHeight: 30,
+		color: Colors.black,
+	},
+	reactionsContainer: {
+		marginTop: 2,
+	},
+	divider: {
+		height: 1,
+		backgroundColor: Colors.lightGrey,
+	},
+	commentCard: {
+		backgroundColor: Colors.background,
+		paddingHorizontal: 24,
+		paddingVertical: 12,
+		borderBottomWidth: 1,
+		borderBottomColor: Colors.lightGrey,
+	},
+	commentRow: {
+		flexDirection: "row",
+		gap: 12,
+	},
+	commentContentWrapper: {
+		flex: 1,
+		gap: 4,
+	},
+	commentHeader: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+	},
+	commentContent: {
+		fontSize: 14,
+		lineHeight: 20,
+		color: Colors.black,
+	},
+	emptyState: {
+		paddingVertical: 48,
+		paddingHorizontal: 32,
+		alignItems: "center",
+	},
+	emptyStateText: {
+		fontSize: 16,
+		fontWeight: "600",
+		color: "#999999",
+		marginBottom: 4,
+	},
+	emptyStateSubtext: {
+		fontSize: 14,
+		color: "#CCCCCC",
+		textAlign: "center",
+	},
+	footerLoader: {
+		paddingVertical: 20,
+		alignItems: "center",
+	},
+	commentInputContainer: {
+		flexDirection: "row",
+		alignItems: "flex-end",
+		paddingHorizontal: 24,
+		paddingTop: 12,
+		paddingBottom: 32,
+		borderTopWidth: 1,
+		borderTopColor: Colors.lightGrey,
+		backgroundColor: Colors.background,
+		gap: 12,
+	},
+	commentInput: {
+		flex: 1,
+		borderWidth: 1,
+		borderColor: Colors.lightGrey,
+		borderRadius: 20,
+		paddingHorizontal: 16,
+		paddingVertical: 8,
+		fontSize: 15,
+		color: Colors.black,
+		maxHeight: 100,
+	},
+	submitButton: {
+		paddingHorizontal: 20,
+		paddingVertical: 10,
+		backgroundColor: Colors.brandGreen,
+		borderRadius: 20,
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	submitButtonDisabled: {
+		backgroundColor: Colors.lightGrey,
+	},
+	submitButtonText: {
+		fontSize: 15,
+		fontWeight: "600",
+		color: Colors.background,
+	},
+	submitButtonTextDisabled: {
+		color: "#999999",
+	},
+});

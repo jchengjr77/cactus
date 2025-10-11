@@ -363,7 +363,6 @@ export default function FeedScreen() {
                 reactionIds={item.reactions}
                 updateId={item.id}
                 groupPoints={item.group_points || 0}
-                onReactionAdded={() => fetchUpdates(true)}
               />
             </View>
             {item.comment_count !== undefined && (

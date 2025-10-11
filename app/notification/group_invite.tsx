@@ -152,7 +152,7 @@ export default function GroupInviteScreen() {
 		<View style={styles.container}>
 			<View style={styles.header}>
 				<TouchableOpacity onPress={() => router.back()} style={styles.backButtonHeader}>
-					<Text style={styles.backButtonHeaderText}>‹ back</Text>
+					<Text style={styles.backButtonHeaderText}>←</Text>
 				</TouchableOpacity>
 			</View>
 

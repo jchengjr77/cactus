@@ -197,7 +197,7 @@ export default function CreateGroupScreen() {
 	return <View style={styles.container}>
 		<View style={styles.header}>
 			<TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-				<Text style={styles.backButtonText}>‹ back</Text>
+				<Text style={styles.backButtonText}>←</Text>
 			</TouchableOpacity>
 			<View style={styles.titleRow}>
 				<View style={styles.titleContainer}>

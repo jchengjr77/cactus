@@ -127,6 +127,8 @@ function PhotoGallery({
 interface UpdateWithUser extends Update {
 	user_name: string;
 	user_avatar_color?: string | null;
+	group_name?: string;
+	group_emoji?: string;
 }
 
 interface CommentWithUser extends Comment {
@@ -192,7 +194,7 @@ export default function UpdateDetailsScreen() {
 		try {
 			const { data, error } = await supabase
 				.from("updates")
-				.select("*, users!inner(name, avatar_color), groups!parent_group_id(points)")
+				.select("*, users!inner(name, avatar_color), groups!parent_group_id(name, emoji_icon, points)")
 				.eq("id", id)
 				.single();
 
@@ -216,6 +218,8 @@ export default function UpdateDetailsScreen() {
 					media: data.media || [],
 					user_name: data.users?.name || "Unknown",
 					user_avatar_color: data.users?.avatar_color || null,
+					group_name: data.groups?.name || "Group",
+					group_emoji: data.groups?.emoji_icon || null,
 				};
 				setUpdate(transformedUpdate);
 				setGroupPoints(data.groups?.points || 0);
@@ -393,10 +397,21 @@ export default function UpdateDetailsScreen() {
 			keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
 		>
 			<View style={styles.header}>
-				<TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-					<Text style={styles.backButtonText}>‹ back</Text>
-				</TouchableOpacity>
-				<Text style={styles.title}>update</Text>
+				<View style={styles.headerTop}>
+					<TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+						<Text style={styles.backButtonText}>←</Text>
+					</TouchableOpacity>
+					{update.group_id && (
+						<TouchableOpacity
+							style={styles.groupNameButton}
+							onPress={() => router.push(`/group/${update.group_id}`)}
+						>
+							<Text style={styles.groupNameText}>
+								{update.group_emoji ? `${update.group_emoji} ` : ''}{update.group_name}
+							</Text>
+						</TouchableOpacity>
+					)}
+				</View>
 			</View>
 
 			<Modal
@@ -470,7 +485,6 @@ export default function UpdateDetailsScreen() {
 												reactionIds={update.reactions}
 												updateId={update.id}
 												groupPoints={groupPoints}
-												onReactionAdded={() => fetchUpdate()}
 											/>
 										</View>
 									</View>
@@ -545,20 +559,32 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 24,
 		paddingTop: 60,
 		paddingBottom: 16,
-		borderBottomWidth: 1,
-		borderBottomColor: Colors.lightGrey,
+	},
+	headerTop: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
 	},
 	backButton: {
-		marginBottom: 8,
+		padding: 4,
 	},
 	backButtonText: {
 		fontSize: 16,
 		color: Colors.brandGreen,
 		fontWeight: "600",
 	},
+	groupNameButton: {
+		flex: 1,
+		alignItems: 'flex-end',
+	},
+	groupNameText: {
+		fontSize: 17,
+		fontWeight: "600",
+		color: Colors.black,
+	},
 	title: {
-		fontSize: 34,
-		fontWeight: "700",
+		fontSize: 17,
+		fontWeight: "600",
 		color: Colors.black,
 	},
 	loadingContainer: {

@@ -181,9 +181,23 @@ export default function Reactions({
 				return;
 			}
 
-			// Refresh parent component only if reaction was actually added
-			if (onReactionAdded) {
-				onReactionAdded();
+			// If reaction was successfully added, fetch updated reactions
+			if (data?.reaction) {
+				// Add the new reaction to the local state immediately
+				const newReaction: Reaction = {
+					id: data.reaction.id,
+					created_at: data.reaction.created_at,
+					user: currentUserId,
+					update: updateId,
+					reaction: emoji,
+				};
+
+				setReactions(prev => [...prev, newReaction]);
+
+				// Optionally notify parent (for updating counts, etc.)
+				if (onReactionAdded) {
+					onReactionAdded();
+				}
 			}
 		} catch (error) {
 			console.error("Error:", error);

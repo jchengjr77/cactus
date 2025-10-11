@@ -1,10 +1,13 @@
+import { Colors } from "@/constants/Colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Group } from "@/types/database";
-import { Colors } from "@/constants/Colors";
+import { MaterialIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { v4 as uuidv4 } from 'uuid';
 
 interface GroupMember {
   id: number;
@@ -25,6 +28,7 @@ export default function NewUpdateScreen() {
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [selectedPhotos, setSelectedPhotos] = useState<ImagePicker.ImagePickerAsset[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -99,22 +103,97 @@ export default function NewUpdateScreen() {
     }
   };
 
+  const pickImages = async () => {
+    if (selectedPhotos.length >= 5) {
+      Alert.alert("Maximum photos", "You can only attach up to 5 photos per update.");
+      return;
+    }
+
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Please allow access to your photos to attach images.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      quality: 0.8,
+      selectionLimit: 5 - selectedPhotos.length,
+    });
+
+    if (!result.canceled && result.assets) {
+      setSelectedPhotos(prev => [...prev, ...result.assets].slice(0, 5));
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setSelectedPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handlePost = async () => {
-    if (!updateText.trim() || !selectedGroup || currentUserId === null) return;
+    if (!updateText.trim() || !selectedGroup || currentUserId === null) {
+      return;
+    }
 
     try {
       setPosting(true);
 
-      const { error } = await supabase
-        .from('updates')
-        .insert([
-          {
-            content: updateText.trim(),
-            author: currentUserId,
-            parent_group_id: selectedGroup.id,
-            read_by: [],
+      // Upload photos to storage first if any are selected
+      const filePaths: string[] = [];
+
+      for (const asset of selectedPhotos) {
+        // Generate unique filename
+        const uid = asset.assetId || uuidv4();
+        const fileExt = asset.uri.split('.').pop() || 'jpg';
+        const fileName = `${selectedGroup.id}/${uid}.${fileExt}`;
+
+        // Create FormData for React Native file upload
+        const formData = new FormData();
+        formData.append('file', {
+          uri: asset.uri,
+          type: asset.type === 'image' ? `image/${fileExt}` : 'image/jpeg',
+          name: fileName,
+        } as any);
+
+        // Check if file already exists
+        const { data: existingFile } = await supabase.storage
+          .from('updates_media')
+          .list(selectedGroup.id.toString(), {
+            search: `${uid}.${fileExt}`
+          });
+
+        if (existingFile && existingFile.length > 0) {
+          // File already exists, skip upload and use existing path
+          filePaths.push(fileName);
+        } else {
+          // File doesn't exist, upload it
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('updates_media')
+            .upload(fileName, formData);
+
+          if (uploadError) {
+            console.error('Error uploading photo:', uploadError);
+            Alert.alert("Error", "Failed to upload photos. Please try again.");
+            return;
           }
-        ]);
+
+          if (uploadData?.path) {
+            filePaths.push(uploadData.path);
+          }
+        }
+      }
+
+      // Call edge function with photo URLs
+      const { data, error } = await supabase.functions.invoke('post-update', {
+        body: {
+          user_id: currentUserId,
+          group_id: selectedGroup.id,
+          text: updateText.trim(),
+          photo_urls: filePaths.length > 0 ? filePaths : undefined,
+        }
+      });
 
       if (error) {
         Alert.alert("Error", "Failed to post update. Please try again.");
@@ -122,12 +201,22 @@ export default function NewUpdateScreen() {
         return;
       }
 
+      if (data?.error) {
+        Alert.alert("Error", data.error);
+        console.error('Error posting update:', data.error);
+        return;
+      }
+
       // Clear form
       setUpdateText("");
       setSelectedGroup(null);
+      setSelectedPhotos([]);
 
-      // Navigate to home feed
-      router.push("/(tabs)");
+      // Navigate to home feed and trigger refresh
+      router.push({
+        pathname: "/(tabs)",
+        params: { refresh: Date.now().toString() }
+      });
     } catch (error) {
       Alert.alert("Error", "Failed to post update. Please try again.");
       console.error('Error:', error);
@@ -227,6 +316,44 @@ export default function NewUpdateScreen() {
             numberOfLines={8}
             textAlignVertical="top"
           />
+        </View>
+
+        <View style={styles.photoSection}>
+          {
+            selectedPhotos.length > 0 && (
+              <View style={styles.photoHeader}>
+                <Text style={styles.label}>photos</Text>
+                {selectedPhotos.length > 0 && (
+                  <Text style={styles.photoCount}>{selectedPhotos.length}/5</Text>
+                )}
+              </View>
+            )
+          }
+
+          {selectedPhotos.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoList}>
+              {selectedPhotos.map((photoAsset, index) => (
+                <View key={index} style={styles.photoContainer}>
+                  <Image source={{ uri: photoAsset.uri }} style={styles.photoPreview} />
+                  <TouchableOpacity
+                    style={styles.removePhotoButton}
+                    onPress={() => removePhoto(index)}
+                  >
+                    <MaterialIcons name="close" size={16} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          )}
+
+          {selectedPhotos.length < 5 && (
+            <TouchableOpacity style={styles.addPhotoButton} onPress={pickImages}>
+              <MaterialIcons name="add-photo-alternate" size={24} color={Colors.brandGreen} />
+              <Text style={styles.addPhotoText}>
+                {selectedPhotos.length === 0 ? 'add pics' : 'add more pics'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <TouchableOpacity
@@ -392,5 +519,57 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: Colors.brandGreen,
+  },
+  photoSection: {
+    gap: 12,
+  },
+  photoHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  photoCount: {
+    fontSize: 13,
+    color: "#999999",
+  },
+  photoList: {
+    flexDirection: "row",
+  },
+  photoContainer: {
+    position: "relative",
+    marginRight: 12,
+  },
+  photoPreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    backgroundColor: Colors.lightGrey,
+  },
+  removePhotoButton: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addPhotoButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: Colors.lightGrey,
+    borderRadius: 12,
+    borderStyle: "dashed",
+  },
+  addPhotoText: {
+    fontSize: 15,
+    color: Colors.brandGreen,
+    fontWeight: "500",
   },
 });

@@ -1,13 +1,121 @@
+import Reactions from "@/components/Reactions";
 import { Colors } from "@/constants/Colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Update } from "@/types/database";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Reactions from "@/components/Reactions";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Gallery from 'react-native-awesome-gallery';
 
 const PAGE_SIZE = 20;
+
+// Image cache to store loaded images
+const imageCache = new Map<string, string>();
+
+// Component that manages gallery for an update
+function PhotoGallery({
+  photoPaths,
+  onImagePress
+}: {
+  photoPaths: string[];
+  onImagePress: (images: string[], index: number) => void;
+}) {
+  const [imageUrls, setImageUrls] = useState<(string | null)[]>(
+    new Array(photoPaths.length).fill(null)
+  );
+
+  useEffect(() => {
+    loadAllImages();
+  }, [photoPaths]);
+
+  const loadAllImages = async () => {
+    const urls = await Promise.all(
+      photoPaths.map(async (photoPath) => {
+        // Check if image is already in cache
+        if (imageCache.has(photoPath)) {
+          return imageCache.get(photoPath)!;
+        }
+
+        try {
+          const { data, error } = await supabase.storage
+            .from('updates_media')
+            .download(photoPath);
+
+          if (error || !data) {
+            console.error('Error downloading photo:', error);
+            return null;
+          }
+
+          const imageUrl = await new Promise<string | null>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(data);
+          });
+
+          // Store in cache if successfully loaded
+          if (imageUrl) {
+            imageCache.set(photoPath, imageUrl);
+          }
+
+          return imageUrl;
+        } catch (error) {
+          console.error('Error loading photo:', error);
+          return null;
+        }
+      })
+    );
+    setImageUrls(urls);
+  };
+
+  const handleImagePress = (index: number) => {
+    const loadedImages = imageUrls.filter((url): url is string => url !== null);
+    if (loadedImages.length > 0) {
+      onImagePress(loadedImages, index);
+    }
+  };
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.photosContainer}
+      onStartShouldSetResponder={() => true}
+    >
+      {photoPaths.map((photoPath, index) => {
+        const imageUrl = imageUrls[index];
+
+        if (imageUrl === null) {
+          // Still loading this specific image
+          return (
+            <View
+              key={index}
+              style={[styles.photoThumbnail, { justifyContent: 'center', alignItems: 'center', marginRight: 8 }]}
+            >
+              <ActivityIndicator size="small" color={Colors.brandGreen} />
+            </View>
+          );
+        }
+
+        return (
+          <TouchableOpacity
+            key={index}
+            onPress={() => handleImagePress(index)}
+            activeOpacity={0.9}
+            style={{ marginRight: 8 }}
+          >
+            <Image
+              source={{ uri: imageUrl }}
+              style={styles.photoThumbnail}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
+  );
+}
 
 export default function FeedScreen() {
   const router = useRouter();
@@ -20,6 +128,9 @@ export default function FeedScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
   const [hasGroups, setHasGroups] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [galleryInitialIndex, setGalleryInitialIndex] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -32,6 +143,15 @@ export default function FeedScreen() {
       fetchUpdates(true);
     }
   }, [currentUserId]);
+
+  // Refetch updates when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (currentUserId !== null) {
+        fetchUpdates(true);
+      }
+    }, [currentUserId])
+  );
 
   const fetchCurrentUser = async () => {
     if (!user) return;
@@ -119,6 +239,7 @@ export default function FeedScreen() {
         reactions: item.reactions || [],
         media_url: item.media_url,
         media_type: item.media_type,
+        media: item.media || [],
         user_name: item.users?.name || 'Unknown',
         user_avatar_color: item.users?.avatar_color || null,
         group_name: item.groups?.name || 'Unknown',
@@ -226,6 +347,16 @@ export default function FeedScreen() {
             <Text style={styles.timestamp}>{formatTimeAgo(item.created_at)}</Text>
           </View>
           <Text style={styles.updateContent}>{item.content}</Text>
+          {item.media && item.media.length > 0 && (
+            <PhotoGallery
+              photoPaths={item.media}
+              onImagePress={(images, index) => {
+                setGalleryImages(images);
+                setGalleryInitialIndex(index);
+                setSelectedPhoto(images[0]); // Just to trigger modal open
+              }}
+            />
+          )}
           <View style={styles.bottomRow}>
             <View onStartShouldSetResponder={() => true} style={styles.reactionsWrapper}>
               <Reactions
@@ -264,6 +395,30 @@ export default function FeedScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>cactus</Text>
       </View>
+
+      <Modal
+        visible={selectedPhoto !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSelectedPhoto(null)}
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setSelectedPhoto(null)}
+          >
+            <Text style={styles.closeButtonText}>✕</Text>
+          </TouchableOpacity>
+          {selectedPhoto && galleryImages.length > 0 && (
+            <Gallery
+              data={galleryImages}
+              initialIndex={galleryInitialIndex}
+              onSwipeToClose={() => setSelectedPhoto(null)}
+              onTap={() => setSelectedPhoto(null)}
+            />
+          )}
+        </View>
+      </Modal>
 
       <FlatList
         data={updates}
@@ -446,5 +601,36 @@ const styles = StyleSheet.create({
   footerLoader: {
     paddingVertical: 20,
     alignItems: "center",
+  },
+  photosContainer: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  photoThumbnail: {
+    width: 75,
+    height: 75,
+    borderRadius: 8,
+    backgroundColor: Colors.lightGrey,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#000',
+    fontSize: 24,
+    fontWeight: '300',
   },
 });

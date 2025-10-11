@@ -91,7 +91,7 @@ export default function GroupInviteScreen() {
 
 			if (!currentMembers.includes(userData.id)) {
 				// Remove user's email from emails_invited and add to members
-				const updatedEmailsInvited = currentEmailsInvited.filter(email => email !== user.email);
+				const updatedEmailsInvited = currentEmailsInvited.filter((email : string) => email !== user.email);
 
 				// Mark group as active if all invited users have accepted
 				const isActive = updatedEmailsInvited.length === 0;

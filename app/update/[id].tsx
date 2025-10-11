@@ -7,7 +7,9 @@ import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
 	FlatList,
+	Image,
 	KeyboardAvoidingView,
+	Modal,
 	Platform,
 	ScrollView,
 	StyleSheet,
@@ -16,7 +18,111 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
+import Gallery from 'react-native-awesome-gallery';
 import Reactions from "@/components/Reactions";
+
+// Component that manages gallery for an update
+function PhotoGallery({
+	photoPaths,
+	onImagePress
+}: {
+	photoPaths: string[];
+	onImagePress: (images: string[], index: number) => void;
+}) {
+	const [imageUrls, setImageUrls] = useState<(string | null)[]>(
+		new Array(photoPaths.length).fill(null)
+	);
+
+	useEffect(() => {
+		loadAllImages();
+	}, [photoPaths]);
+
+	const loadAllImages = async () => {
+		const urls = await Promise.all(
+			photoPaths.map(async (photoPath) => {
+				// Check if image is already in cache
+				if (imageCache.has(photoPath)) {
+					return imageCache.get(photoPath)!;
+				}
+
+				try {
+					const { data, error } = await supabase.storage
+						.from('updates_media')
+						.download(photoPath);
+
+					if (error || !data) {
+						console.error('Error downloading photo:', error);
+						return null;
+					}
+
+					const imageUrl = await new Promise<string | null>((resolve) => {
+						const reader = new FileReader();
+						reader.onloadend = () => resolve(reader.result as string);
+						reader.onerror = () => resolve(null);
+						reader.readAsDataURL(data);
+					});
+
+					// Store in cache if successfully loaded
+					if (imageUrl) {
+						imageCache.set(photoPath, imageUrl);
+					}
+
+					return imageUrl;
+				} catch (error) {
+					console.error('Error loading photo:', error);
+					return null;
+				}
+			})
+		);
+		setImageUrls(urls);
+	};
+
+	const handleImagePress = (index: number) => {
+		const loadedImages = imageUrls.filter((url): url is string => url !== null);
+		if (loadedImages.length > 0) {
+			onImagePress(loadedImages, index);
+		}
+	};
+
+	return (
+		<ScrollView
+			horizontal
+			showsHorizontalScrollIndicator={false}
+			style={styles.photosContainer}
+		>
+			{photoPaths.map((photoPath, index) => {
+				const imageUrl = imageUrls[index];
+
+				if (imageUrl === null) {
+					// Still loading this specific image
+					return (
+						<View
+							key={index}
+							style={[styles.photoThumbnail, { justifyContent: 'center', alignItems: 'center', marginRight: 12 }]}
+						>
+							<ActivityIndicator size="small" color={Colors.brandGreen} />
+						</View>
+					);
+				}
+
+				return (
+					<TouchableOpacity
+						key={index}
+						onPress={() => handleImagePress(index)}
+						activeOpacity={0.9}
+						style={{ marginRight: 12 }}
+					>
+						<Image
+							source={{ uri: imageUrl }}
+							style={styles.photoThumbnail}
+							resizeMode="cover"
+						/>
+					</TouchableOpacity>
+				);
+			})}
+		</ScrollView>
+	);
+}
 
 interface UpdateWithUser extends Update {
 	user_name: string;
@@ -29,6 +135,9 @@ interface CommentWithUser extends Comment {
 }
 
 const PAGE_SIZE = 20;
+
+// Image cache to store loaded images
+const imageCache = new Map<string, string>();
 
 export default function UpdateDetailsScreen() {
 	const router = useRouter();
@@ -44,6 +153,9 @@ export default function UpdateDetailsScreen() {
 	const [submitting, setSubmitting] = useState(false);
 	const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 	const [groupPoints, setGroupPoints] = useState<number>(0);
+	const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+	const [galleryImages, setGalleryImages] = useState<string[]>([]);
+	const [galleryInitialIndex, setGalleryInitialIndex] = useState(0);
 
 	useEffect(() => {
 		if (user?.email) {
@@ -101,6 +213,7 @@ export default function UpdateDetailsScreen() {
 					reactions: data.reactions || [],
 					media_url: data.media_url,
 					media_type: data.media_type,
+					media: data.media || [],
 					user_name: data.users?.name || "Unknown",
 					user_avatar_color: data.users?.avatar_color || null,
 				};
@@ -286,6 +399,30 @@ export default function UpdateDetailsScreen() {
 				<Text style={styles.title}>update</Text>
 			</View>
 
+			<Modal
+				visible={selectedPhoto !== null}
+				transparent={true}
+				animationType="fade"
+				onRequestClose={() => setSelectedPhoto(null)}
+			>
+				<View style={styles.modalContainer}>
+					<TouchableOpacity
+						style={styles.closeButton}
+						onPress={() => setSelectedPhoto(null)}
+					>
+						<Text style={styles.closeButtonText}>✕</Text>
+					</TouchableOpacity>
+					{selectedPhoto && galleryImages.length > 0 && (
+						<Gallery
+							data={galleryImages}
+							initialIndex={galleryInitialIndex}
+							onSwipeToClose={() => setSelectedPhoto(null)}
+							onTap={() => setSelectedPhoto(null)}
+						/>
+					)}
+				</View>
+			</Modal>
+
 			<FlatList
 				data={comments}
 				renderItem={renderComment}
@@ -318,6 +455,16 @@ export default function UpdateDetailsScreen() {
 											</Text>
 										</View>
 										<Text style={styles.updateContent}>{update.content}</Text>
+										{update.media && update.media.length > 0 && (
+											<PhotoGallery
+												photoPaths={update.media}
+												onImagePress={(images, index) => {
+													setGalleryImages(images);
+													setGalleryInitialIndex(index);
+													setSelectedPhoto(images[0]); // Just to trigger modal open
+												}}
+											/>
+										)}
 										<View style={styles.reactionsContainer}>
 											<Reactions
 												reactionIds={update.reactions}
@@ -561,5 +708,36 @@ const styles = StyleSheet.create({
 	},
 	submitButtonTextDisabled: {
 		color: "#999999",
+	},
+	photosContainer: {
+		marginTop: 12,
+		marginBottom: 8,
+	},
+	photoThumbnail: {
+		width: 100,
+		height: 100,
+		borderRadius: 12,
+		backgroundColor: Colors.lightGrey,
+	},
+	modalContainer: {
+		flex: 1,
+		backgroundColor: '#FFFFFF',
+	},
+	closeButton: {
+		position: 'absolute',
+		top: 50,
+		right: 20,
+		zIndex: 10,
+		backgroundColor: 'rgba(0, 0, 0, 0.1)',
+		borderRadius: 20,
+		width: 40,
+		height: 40,
+		justifyContent: 'center',
+		alignItems: 'center',
+	},
+	closeButtonText: {
+		color: '#000',
+		fontSize: 24,
+		fontWeight: '300',
 	},
 });

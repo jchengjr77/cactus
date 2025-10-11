@@ -31,6 +31,7 @@ export interface Update {
   reactions: number[]; // Array of reaction IDs attached to this update
   media_url?: string | null;
   media_type?: 'photo' | 'video' | 'voice' | null;
+  media?: string[]; // Array of photo URLs in storage
   // Joined data
   user_name?: string;
   user_avatar_color?: string | null;

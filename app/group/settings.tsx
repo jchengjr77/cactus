@@ -162,7 +162,7 @@ export default function GroupSettingsScreen() {
 			if (!currentGroupData) return;
 
 			// Remove current user from members
-			const updatedMembers = currentGroupData.members.filter(memberId => memberId !== currentUserId);
+			const updatedMembers = currentGroupData.members.filter((memberId : number) => memberId !== currentUserId);
 
 			// Update group
 			const { error } = await supabase

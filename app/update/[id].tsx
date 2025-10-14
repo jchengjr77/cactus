@@ -6,11 +6,13 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
+	Alert,
 	FlatList,
 	Image,
 	KeyboardAvoidingView,
 	Modal,
 	Platform,
+	Pressable,
 	ScrollView,
 	StyleSheet,
 	Text,
@@ -20,6 +22,7 @@ import {
 } from "react-native";
 import Gallery from 'react-native-awesome-gallery';
 import Reactions from "@/components/Reactions";
+import { MaterialIcons } from '@expo/vector-icons';
 
 // Component that manages gallery for an update
 function PhotoGallery({
@@ -158,6 +161,11 @@ export default function UpdateDetailsScreen() {
 	const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 	const [galleryImages, setGalleryImages] = useState<string[]>([]);
 	const [galleryInitialIndex, setGalleryInitialIndex] = useState(0);
+	const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+	const [editedContent, setEditedContent] = useState("");
+	const [isDeleting, setIsDeleting] = useState(false);
+	const [isSaving, setIsSaving] = useState(false);
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
 	useEffect(() => {
 		if (user?.email) {
@@ -285,6 +293,102 @@ export default function UpdateDetailsScreen() {
 	const handleLoadMore = () => {
 		if (!loadingMore && hasMore) {
 			fetchComments(false);
+		}
+	};
+
+	const handleEditUpdate = () => {
+		if (!update) return;
+		setEditedContent(update.content);
+		setIsEditModalVisible(true);
+	};
+
+	const handleSaveEdit = async () => {
+		if (!editedContent.trim() || isSaving) return;
+
+		setIsSaving(true);
+
+		try {
+			const { error } = await supabase
+				.from("updates")
+				.update({ content: editedContent.trim() })
+				.eq("id", id);
+
+			if (error) {
+				console.error("Error updating content:", error);
+				Alert.alert("Error", "Failed to update. Please try again.");
+				return;
+			}
+
+			// Update local state
+			if (update) {
+				setUpdate({ ...update, content: editedContent.trim() });
+			}
+
+			setIsEditModalVisible(false);
+		} catch (error) {
+			console.error("Error:", error);
+			Alert.alert("Error", "Failed to update. Please try again.");
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
+	const handleDeleteUpdate = async () => {
+		if (isDeleting) return;
+
+		setIsDeleting(true);
+		setShowDeleteConfirm(false);
+
+		try {
+			// First, delete all reactions associated with this update
+			if (update?.reactions && update.reactions.length > 0) {
+				const { error: reactionsError } = await supabase
+					.from("reactions")
+					.delete()
+					.in("id", update.reactions);
+
+				if (reactionsError) {
+					console.error("Error deleting reactions:", reactionsError);
+					Alert.alert("Error", "Failed to delete. Please try again.");
+					setIsDeleting(false);
+					return;
+				}
+			}
+
+			// Then, delete all comments associated with this update
+			if (update?.comments && update.comments.length > 0) {
+				const { error: commentsError } = await supabase
+					.from("comments")
+					.delete()
+					.in("id", update.comments);
+
+				if (commentsError) {
+					console.error("Error deleting comments:", commentsError);
+					Alert.alert("Error", "Failed to delete. Please try again.");
+					setIsDeleting(false);
+					return;
+				}
+			}
+
+			// Finally, delete the update itself
+			const { error } = await supabase
+				.from("updates")
+				.delete()
+				.eq("id", id);
+
+			if (error) {
+				console.error("Error deleting update:", error);
+				Alert.alert("Error", "Failed to delete. Please try again.");
+				return;
+			}
+
+			// Navigate back to feed
+			router.replace("/(tabs)");
+		} catch (error) {
+			console.error("Error:", error);
+			Alert.alert("Error", "Failed to delete. Please try again.");
+		} finally {
+			setIsDeleting(false);
 		}
 	};
 
@@ -438,6 +542,98 @@ export default function UpdateDetailsScreen() {
 				</View>
 			</Modal>
 
+			{/* Edit Modal */}
+			<Modal
+				visible={isEditModalVisible}
+				transparent={true}
+				animationType="fade"
+				onRequestClose={() => setIsEditModalVisible(false)}
+			>
+				<Pressable
+					style={styles.modalOverlay}
+					onPress={() => setIsEditModalVisible(false)}
+				>
+					<Pressable
+						style={styles.editModalContent}
+						onPress={(e) => e.stopPropagation()}
+					>
+						<Text style={styles.modalTitle}>edit update</Text>
+						<TextInput
+							style={styles.editTextArea}
+							value={editedContent}
+							onChangeText={(text) => {
+								if (text.length <= 300) {
+									setEditedContent(text);
+								}
+							}}
+							placeholder="what's happening?"
+							placeholderTextColor="#999"
+							multiline
+							textAlignVertical="top"
+							maxLength={300}
+						/>
+						<Text style={styles.charCount}>{editedContent.length}/300</Text>
+						<View style={styles.modalButtons}>
+							<TouchableOpacity
+								style={styles.cancelButton}
+								onPress={() => setIsEditModalVisible(false)}
+							>
+								<Text style={styles.cancelButtonText}>cancel</Text>
+							</TouchableOpacity>
+							<TouchableOpacity
+								style={[styles.saveButton, (!editedContent.trim() || isSaving) && styles.saveButtonDisabled]}
+								onPress={handleSaveEdit}
+								disabled={!editedContent.trim() || isSaving}
+							>
+								<Text style={[styles.saveButtonText, (!editedContent.trim() || isSaving) && styles.saveButtonTextDisabled]}>
+									{isSaving ? "saving..." : "save"}
+								</Text>
+							</TouchableOpacity>
+						</View>
+					</Pressable>
+				</Pressable>
+			</Modal>
+
+			{/* Delete Confirmation Modal */}
+			<Modal
+				visible={showDeleteConfirm}
+				transparent={true}
+				animationType="fade"
+				onRequestClose={() => setShowDeleteConfirm(false)}
+			>
+				<Pressable
+					style={styles.modalOverlay}
+					onPress={() => setShowDeleteConfirm(false)}
+				>
+					<Pressable
+						style={styles.deleteModalContent}
+						onPress={(e) => e.stopPropagation()}
+					>
+						<Text style={styles.modalTitle}>delete update?</Text>
+						<Text style={styles.deleteWarning}>
+							this action cannot be undone
+						</Text>
+						<View style={styles.modalButtons}>
+							<TouchableOpacity
+								style={styles.cancelButton}
+								onPress={() => setShowDeleteConfirm(false)}
+							>
+								<Text style={styles.cancelButtonText}>cancel</Text>
+							</TouchableOpacity>
+							<TouchableOpacity
+								style={[styles.deleteButton, isDeleting && styles.deleteButtonDisabled]}
+								onPress={handleDeleteUpdate}
+								disabled={isDeleting}
+							>
+								<Text style={[styles.deleteButtonText, isDeleting && styles.deleteButtonTextDisabled]}>
+									{isDeleting ? "deleting..." : "delete"}
+								</Text>
+							</TouchableOpacity>
+						</View>
+					</Pressable>
+				</Pressable>
+			</Modal>
+
 			<FlatList
 				data={comments}
 				renderItem={renderComment}
@@ -480,12 +676,30 @@ export default function UpdateDetailsScreen() {
 												}}
 											/>
 										)}
-										<View style={styles.reactionsContainer}>
-											<Reactions
-												reactionIds={update.reactions}
-												updateId={update.id}
-												groupPoints={groupPoints}
-											/>
+										<View style={styles.bottomSection}>
+											<View style={styles.reactionsContainer}>
+												<Reactions
+													reactionIds={update.reactions}
+													updateId={update.id}
+													groupPoints={groupPoints}
+												/>
+											</View>
+											{currentUserId === update.user_id && (
+												<View style={styles.actionButtons}>
+													<TouchableOpacity
+														style={styles.iconButton}
+														onPress={handleEditUpdate}
+													>
+														<MaterialIcons name="edit" size={20} color={Colors.brandGreen} />
+													</TouchableOpacity>
+													<TouchableOpacity
+														style={styles.iconButton}
+														onPress={() => setShowDeleteConfirm(true)}
+													>
+														<MaterialIcons name="delete" size={20} color="#DC2626" />
+													</TouchableOpacity>
+												</View>
+											)}
 										</View>
 									</View>
 								</View>
@@ -587,6 +801,19 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 12,
 		paddingVertical: 6,
 	},
+	bottomSection: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		marginTop: 2,
+	},
+	actionButtons: {
+		flexDirection: 'row',
+		gap: 8,
+	},
+	iconButton: {
+		padding: 4,
+	},
 	title: {
 		fontSize: 17,
 		fontWeight: "600",
@@ -648,7 +875,7 @@ const styles = StyleSheet.create({
 		color: Colors.black,
 	},
 	reactionsContainer: {
-		marginTop: 2,
+		flex: 1,
 	},
 	divider: {
 		height: 1,
@@ -770,5 +997,115 @@ const styles = StyleSheet.create({
 		color: '#000',
 		fontSize: 24,
 		fontWeight: '300',
+	},
+	modalOverlay: {
+		flex: 1,
+		backgroundColor: "rgba(0, 0, 0, 0.5)",
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	editModalContent: {
+		backgroundColor: Colors.background,
+		borderRadius: 16,
+		padding: 24,
+		width: "85%",
+		maxWidth: 400,
+		gap: 12,
+	},
+	deleteModalContent: {
+		backgroundColor: Colors.background,
+		borderRadius: 16,
+		padding: 24,
+		width: "85%",
+		maxWidth: 400,
+		gap: 16,
+	},
+	modalTitle: {
+		fontSize: 20,
+		fontWeight: "700",
+		color: Colors.black,
+	},
+	editTextArea: {
+		borderWidth: 1,
+		borderColor: Colors.lightGrey,
+		borderRadius: 12,
+		padding: 16,
+		fontSize: 16,
+		color: Colors.black,
+		backgroundColor: Colors.background,
+		minHeight: 120,
+		maxHeight: 200,
+		textAlignVertical: "top",
+	},
+	charCount: {
+		fontSize: 13,
+		color: "#999999",
+		textAlign: "right",
+	},
+	deleteWarning: {
+		fontSize: 15,
+		color: "#666666",
+		lineHeight: 22,
+	},
+	modalButtons: {
+		flexDirection: "row",
+		gap: 12,
+		marginTop: 8,
+	},
+	cancelButton: {
+		flex: 1,
+		paddingVertical: 12,
+		paddingHorizontal: 16,
+		borderRadius: 12,
+		borderWidth: 1,
+		borderColor: Colors.lightGrey,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	cancelButtonText: {
+		fontSize: 16,
+		fontWeight: "600",
+		color: Colors.black,
+	},
+	saveButton: {
+		flex: 1,
+		paddingVertical: 12,
+		paddingHorizontal: 16,
+		borderRadius: 12,
+		backgroundColor: Colors.brandGreen,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	saveButtonDisabled: {
+		backgroundColor: Colors.lightGrey,
+	},
+	saveButtonText: {
+		fontSize: 16,
+		fontWeight: "600",
+		color: Colors.background,
+	},
+	saveButtonTextDisabled: {
+		color: "#999999",
+	},
+	deleteButton: {
+		flex: 1,
+		paddingVertical: 12,
+		paddingHorizontal: 16,
+		borderRadius: 12,
+		backgroundColor: "#DC2626",
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	deleteButtonDisabled: {
+		backgroundColor: "#FCA5A5",
+	},
+	deleteButtonText: {
+		fontSize: 16,
+		fontWeight: "600",
+		color: Colors.background,
+	},
+	deleteButtonTextDisabled: {
+		color: "#FFFFFF",
+		opacity: 0.7,
 	},
 });

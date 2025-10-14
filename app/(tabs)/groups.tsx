@@ -2,8 +2,8 @@ import { Colors } from "@/constants/Colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Group } from "@/types/database";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
+import { useEffect, useState, useCallback } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface GroupWithMembers extends Group {
@@ -28,6 +28,15 @@ export default function GroupsScreen() {
       fetchGroups();
     }
   }, [currentUserId]);
+
+  // Refresh groups whenever the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (currentUserId !== null) {
+        fetchGroups();
+      }
+    }, [currentUserId])
+  );
 
   const fetchCurrentUser = async () => {
     if (!user?.email) return;

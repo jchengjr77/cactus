@@ -158,6 +158,17 @@ export default function Reactions({
 	const handleAddReaction = async (emoji: string) => {
 		if (!currentUserId || adding) return;
 
+		// Check if user already has this reaction
+		const existingReaction = reactions.find(
+			r => r.user === currentUserId && r.reaction === emoji
+		);
+
+		if (existingReaction) {
+			// Remove the reaction
+			await handleRemoveReaction(existingReaction.id);
+			return;
+		}
+
 		setAdding(true);
 		setShowPicker(false);
 
@@ -198,6 +209,65 @@ export default function Reactions({
 				if (onReactionAdded) {
 					onReactionAdded();
 				}
+			}
+		} catch (error) {
+			console.error("Error:", error);
+		} finally {
+			setAdding(false);
+		}
+	};
+
+	const handleRemoveReaction = async (reactionId: number) => {
+		if (!currentUserId || adding) return;
+
+		setAdding(true);
+
+		try {
+			// First, get the current reactions array from the update
+			const { data: updateData, error: fetchError } = await supabase
+				.from("updates")
+				.select("reactions")
+				.eq("id", updateId)
+				.single();
+
+			if (fetchError) {
+				console.error("Error fetching update:", fetchError);
+				return;
+			}
+
+			// Remove the reaction ID from the reactions array
+			const updatedReactions = (updateData?.reactions || []).filter(
+				(id: number) => id !== reactionId
+			);
+
+			// Update the update's reactions array
+			const { error: updateError } = await supabase
+				.from("updates")
+				.update({ reactions: updatedReactions })
+				.eq("id", updateId);
+
+			if (updateError) {
+				console.error("Error updating update reactions:", updateError);
+				return;
+			}
+
+			// Delete the reaction from the reactions table
+			const { error: deleteError } = await supabase
+				.from("reactions")
+				.delete()
+				.eq("id", reactionId);
+
+			if (deleteError) {
+				console.error("Error deleting reaction:", deleteError);
+				return;
+			}
+
+			// Remove the reaction from local state immediately
+			setReactions(prev => prev.filter(r => r.id !== reactionId));
+
+			// Optionally notify parent
+			if (onReactionAdded) {
+				onReactionAdded();
 			}
 		} catch (error) {
 			console.error("Error:", error);

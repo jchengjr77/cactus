@@ -34,20 +34,11 @@ export default function GroupSettingsScreen() {
 	const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
 	const [emailError, setEmailError] = useState("");
 	const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+	const [isSaving, setIsSaving] = useState(false);
 
 	useEffect(() => {
 		loadGroupData();
 	}, [id]);
-
-	// Auto-save when component unmounts (user backs out)
-	useEffect(() => {
-		return () => {
-			// Save changes when unmounting
-			if (groupName && groupEmoji && members.length > 0 && cadence > 0) {
-				handleSave();
-			}
-		};
-	}, [groupName, groupEmoji, members, cadence]);
 
 	const loadGroupData = async () => {
 		try {
@@ -149,41 +140,67 @@ export default function GroupSettingsScreen() {
 	};
 
 	const handleLeaveGroup = async () => {
-		if (!currentUserId) return;
+		if (!currentUserId) {
+			console.error('No current user ID');
+			return;
+		}
 
 		try {
 			// Get current group data
-			const { data: currentGroupData } = await supabase
+			const { data: currentGroupData, error: fetchError } = await supabase
 				.from('groups')
 				.select('members')
 				.eq('id', id)
 				.single();
 
-			if (!currentGroupData) return;
+			if (fetchError) {
+				console.error('Error fetching group data:', fetchError);
+				return;
+			}
+
+			if (!currentGroupData) {
+				console.error('No group data found');
+				return;
+			}
 
 			// Remove current user from members
 			const updatedMembers = currentGroupData.members.filter((memberId : number) => memberId !== currentUserId);
 
-			// Update group
-			const { error } = await supabase
-				.from('groups')
-				.update({ members: updatedMembers })
-				.eq('id', id);
+			// If this is the last member, delete the group instead
+			if (updatedMembers.length === 0) {
+				const { error: deleteError } = await supabase
+					.from('groups')
+					.delete()
+					.eq('id', id);
 
-			if (error) {
-				console.error('Error leaving group:', error);
-				return;
+				if (deleteError) {
+					console.error('Error deleting group:', deleteError);
+					return;
+				}
+			} else {
+				// Update group with remaining members
+				const { error: updateError } = await supabase
+					.from('groups')
+					.update({ members: updatedMembers })
+					.eq('id', id);
+
+				if (updateError) {
+					console.error('Error updating group:', updateError);
+					return;
+				}
 			}
 
 			// Navigate to groups list
 			router.replace('/(tabs)/groups');
 		} catch (error) {
-			console.error('Error:', error);
+			console.error('Error in handleLeaveGroup:', error);
 		}
 	};
 
 	const handleSave = async () => {
 		try {
+			setIsSaving(true);
+
 			// Get current group data to compare
 			const { data: currentGroupData } = await supabase
 				.from('groups')
@@ -252,8 +269,13 @@ export default function GroupSettingsScreen() {
 					.from('notifications')
 					.insert(notifications);
 			}
+
+			// Navigate back after successful save
+			router.back();
 		} catch (error) {
 			console.error('Error:', error);
+		} finally {
+			setIsSaving(false);
 		}
 	};
 
@@ -360,11 +382,23 @@ export default function GroupSettingsScreen() {
 					)}
 				</View>
 
+				{/* Save Button */}
 				<TouchableOpacity
-					style={styles.leaveButton}
-					onPress={handleLeaveGroup}
+					style={styles.saveButton}
+					onPress={handleSave}
+					disabled={isSaving}
 				>
-					<Text style={styles.leaveButtonText}>
+					<Text style={styles.saveButtonText}>
+						{isSaving ? 'saving...' : 'save changes'}
+					</Text>
+				</TouchableOpacity>
+
+				{/* Leave Group */}
+				<TouchableOpacity
+					onPress={handleLeaveGroup}
+					style={styles.leaveGroupContainer}
+				>
+					<Text style={styles.leaveGroupText}>
 						leave group
 					</Text>
 				</TouchableOpacity>
@@ -420,6 +454,19 @@ const styles = StyleSheet.create({
 		fontSize: 34,
 		fontWeight: "700",
 		color: Colors.brandGreen,
+	},
+	saveButton: {
+		height: 48,
+		backgroundColor: Colors.brandGreen,
+		borderRadius: 12,
+		alignItems: "center",
+		justifyContent: "center",
+		marginTop: 16,
+	},
+	saveButtonText: {
+		fontSize: 16,
+		fontWeight: "600",
+		color: Colors.background,
 	},
 	content: {
 		flex: 1,
@@ -538,20 +585,16 @@ const styles = StyleSheet.create({
 		color: Colors.background,
 		fontWeight: "600",
 	},
-	// Leave Button
-	leaveButton: {
-		height: 48,
-		backgroundColor: Colors.background,
-		borderRadius: 12,
-		borderWidth: 1,
-		borderColor: "#DC2626",
+	// Leave Group
+	leaveGroupContainer: {
 		alignItems: "center",
 		justifyContent: "center",
-		marginTop: 16,
+		marginTop: 24,
+		paddingVertical: 12,
 	},
-	leaveButtonText: {
+	leaveGroupText: {
 		fontSize: 16,
-		fontWeight: "600",
+		fontWeight: "500",
 		color: "#DC2626",
 	},
 });

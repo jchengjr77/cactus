@@ -305,16 +305,25 @@ export default function NewUpdateScreen() {
         </View>
 
         <View style={styles.updateInput}>
-          <Text style={styles.label}>your update</Text>
+          <View style={styles.labelRow}>
+            <Text style={styles.label}>your update</Text>
+            <Text style={[styles.charCount, updateText.length > 300 && styles.charCountError]}>
+              {updateText.length}/300
+            </Text>
+          </View>
           <TextInput
             style={styles.textArea}
             value={updateText}
-            onChangeText={setUpdateText}
+            onChangeText={(text) => {
+              if (text.length <= 300) {
+                setUpdateText(text);
+              }
+            }}
             placeholder="what's happening?"
             placeholderTextColor="#999"
             multiline
-            numberOfLines={8}
             textAlignVertical="top"
+            maxLength={300}
           />
         </View>
 
@@ -487,6 +496,18 @@ const styles = StyleSheet.create({
   updateInput: {
     gap: 8,
   },
+  labelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  charCount: {
+    fontSize: 13,
+    color: "#999999",
+  },
+  charCountError: {
+    color: "#DC2626",
+  },
   textArea: {
     borderWidth: 1,
     borderColor: Colors.lightGrey,
@@ -495,7 +516,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.black,
     backgroundColor: Colors.background,
-    minHeight: 150,
+    minHeight: 80,
+    maxHeight: 200,
   },
   emptyState: {
     alignItems: "center",

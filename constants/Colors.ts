@@ -1,10 +1,10 @@
 export const Colors = {
-  highlight: '#FEA405',      // highlights (like notification unread indicators, etc)
+  highlight: '#b39e36',       // highlights (like notification unread indicators, etc)
   background: '#FFFFFE',      // background
   lightGrey: '#DBE4C9',       // light grey
-  vibrantGreen: '#8AA624',    // vibrant green
-  brandGreen: '#859F3D',      // brand green
-  darkGreen: '#31511E',       // dark green
+  lightGreen: '#6bc77a',      // light green
+  brandGreen: '#408f48',      // brand green
+  darkGreen: '#668f40',       // dark green (brown)
   black: '#1A1A19',           // black
 };
 

@@ -581,6 +581,11 @@ const styles = StyleSheet.create({
 		fontSize: 17,
 		fontWeight: "600",
 		color: Colors.black,
+		borderWidth: 1,
+		borderColor: Colors.lightGrey,
+		borderRadius: 8,
+		paddingHorizontal: 12,
+		paddingVertical: 6,
 	},
 	title: {
 		fontSize: 17,

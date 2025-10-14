@@ -6,7 +6,7 @@
 
 Cactus will keep your friend group connected.
 
-Create a group. Invite your friends. Set an update cadence. Commit to a group stake. Have fun.
+Create a group. Invite your friends. Set an update cadence. Earn points. Have fun.
 
 ## who is this for?
 
@@ -30,19 +30,15 @@ An **update** can be literally anything. It could be a five-page tirade on tippi
 
 Failure to post an **update** in a timely manner will result in you paying the **stake**.
 
-### stakes
+### points
 
-Each **group** will have a defined **stake** which is the penalty for missing an **update**. These come in different forms such as Coffee, Beer, Dinner, a brand-spanking-new PS5, or whatever else your group agrees to. **Stakes** are paid into the **group tab**.
+Each **group** will have a **points** total, which will grow over time. You and your people will earn points simply by interacting with each other (i.e. posting updates regularly, adding comments, reacting, etc).
 
-Example: JJ missed an update. His group's stake is a coffee, which is $5. That amount is charged to his credit card, and added to the group's tab.
+As your group earn more points, you unlock rewards.
 
-### tab
+### rewards
 
-All **stakes** collected from the **group** go into the **tab**. When the **tab** is settled, the entirety of the **tab** is distributed evenly amongst all group members.
-
-The **tab** can be settled at any time with a majority vote from the group members.
-
-*Note: The tab is intended to help pay for an in-person group event of sorts, like a coffee run, a nice dinner,  party supplies, etc.*
+Rewards are given out to groups that accumulate a certain number of points. These rewards can include exclusive emoji reaction packs, custom app themes, typefaces, increased photo/video sharing limits, and even physical merch customised for your group.
 
 ## why a cactus?
 

@@ -1,11 +1,15 @@
 /**
  * Theme constants for Cactus app
- * Using system default font (San Francisco on iOS, similar to Inter)
+ * Using JetBrains Mono for all text
  */
 
 export const Fonts = {
-  // Default system font for all text
-  default: "System",
+  regular: "JetBrainsMono-Regular",
+  medium: "JetBrainsMono-Medium",
+  semibold: "JetBrainsMono-SemiBold",
+  bold: "JetBrainsMono-Bold",
+  // Default font for all text
+  default: "JetBrainsMono-Regular",
 };
 
 export const Colors = {

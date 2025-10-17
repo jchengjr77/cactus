@@ -2,6 +2,8 @@
 
 **water your friendships.**
 
+[thecactus.app](https://www.thecactus.app)
+
 ## what is this?
 
 Cactus will keep your friend group connected.

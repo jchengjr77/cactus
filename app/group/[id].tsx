@@ -3,9 +3,14 @@ import { Group, Update } from "@/types/database";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, ScrollView, StyleSheet,  TouchableOpacity, View } from "react-native";
 import { Colors } from "@/constants/Colors";
 import Reactions from "@/components/Reactions";
+import MyText from "@/components/MyText";
+import MyTextInput from "@/components/MyTextInput";
+import MyHeading from "@/components/MyHeading";
+import MyBoldText from "@/components/MyBoldText";
+import MySemiBoldText from "@/components/MySemiBoldText";
 
 interface UpdateWithUser extends Update {
   user_name: string;
@@ -169,14 +174,14 @@ export default function GroupBoardScreen() {
     >
       <View style={styles.updateRow}>
         <View style={[styles.avatar, { backgroundColor: item.user_avatar_color || '#E0E0E0' }]}>
-          <Text style={styles.avatarText}>{item.user_name?.[0]?.toUpperCase() || "U"}</Text>
+          <MyText style={styles.avatarText}>{item.user_name?.[0]?.toUpperCase() || "U"}</MyText>
         </View>
         <View style={styles.updateContentWrapper}>
           <View style={styles.updateHeader}>
-            <Text style={styles.userName}>{item.user_name}</Text>
-            <Text style={styles.timestamp}>{formatTimeAgo(item.created_at)}</Text>
+            <MyText style={styles.userName}>{item.user_name}</MyText>
+            <MyText style={styles.timestamp}>{formatTimeAgo(item.created_at)}</MyText>
           </View>
-          <Text style={styles.updateContent}>{item.content}</Text>
+          <MyText style={styles.updateContent}>{item.content}</MyText>
           <View style={styles.bottomRow}>
             <View onStartShouldSetResponder={() => true} style={styles.reactionsWrapper}>
               <Reactions
@@ -187,9 +192,9 @@ export default function GroupBoardScreen() {
               />
             </View>
             {item.comment_count !== undefined && (
-              <Text style={styles.commentCount}>
+              <MyText style={styles.commentCount}>
                 {item.comment_count} {item.comment_count === 1 ? 'comment' : 'comments'}
-              </Text>
+              </MyText>
             )}
           </View>
         </View>
@@ -211,16 +216,16 @@ export default function GroupBoardScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>←</Text>
+          <MyText style={styles.backButtonText}>←</MyText>
         </TouchableOpacity>
         <View style={styles.titleRow}>
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>
+            <MyHeading style={styles.title}>
               {group?.emoji_icon ? `${group.emoji_icon} ` : ''}{group?.name || 'Group'}
-            </Text>
+            </MyHeading>
             {group && !group.is_active && (
               <View style={styles.inactiveBadge}>
-                <Text style={styles.inactiveBadgeText}>inactive</Text>
+                <MyText style={styles.inactiveBadgeText}>inactive</MyText>
               </View>
             )}
           </View>
@@ -231,8 +236,8 @@ export default function GroupBoardScreen() {
         {group && (
           <View style={styles.groupInfo}>
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Updates</Text>
-              <Text style={styles.infoValue}>
+              <MyText style={styles.infoLabel}>Updates</MyText>
+              <MyText style={styles.infoValue}>
                 {group.cadence_hrs < 24
                   ? `Every ${group.cadence_hrs}h`
                   : group.cadence_hrs === 24
@@ -240,14 +245,14 @@ export default function GroupBoardScreen() {
                   : group.cadence_hrs === 168
                   ? "Weekly"
                   : `Every ${Math.floor(group.cadence_hrs / 24)}d`}
-              </Text>
+              </MyText>
             </View>
             <View style={styles.infoDivider} />
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Points</Text>
-              <Text style={styles.infoValue}>
-                <Text style={styles.pointsAmount}>{group.points || 0}</Text>
-              </Text>
+              <MyText style={styles.infoLabel}>Points</MyText>
+              <MyText style={styles.infoValue}>
+                <MyText style={styles.pointsAmount}>{group.points || 0}</MyText>
+              </MyText>
             </View>
           </View>
         )}
@@ -264,9 +269,9 @@ export default function GroupBoardScreen() {
             style={[styles.filterChip, selectedAuthor === null && styles.filterChipActive]}
             onPress={() => setSelectedAuthor(null)}
           >
-            <Text style={[styles.filterChipText, selectedAuthor === null && styles.filterChipTextActive]}>
+            <MySemiBoldText style={[styles.filterChipText, selectedAuthor === null && styles.filterChipTextActive]}>
               All
-            </Text>
+            </MySemiBoldText>
           </TouchableOpacity>
           {authors.map((author) => (
             <TouchableOpacity
@@ -274,9 +279,9 @@ export default function GroupBoardScreen() {
               style={[styles.filterChip, selectedAuthor === author.id && styles.filterChipActive]}
               onPress={() => setSelectedAuthor(author.id)}
             >
-              <Text style={[styles.filterChipText, selectedAuthor === author.id && styles.filterChipTextActive]}>
+              <MySemiBoldText style={[styles.filterChipText, selectedAuthor === author.id && styles.filterChipTextActive]}>
                 {author.name}
-              </Text>
+              </MySemiBoldText>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -295,8 +300,8 @@ export default function GroupBoardScreen() {
         ListFooterComponent={renderFooter}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>no updates yet</Text>
-            <Text style={styles.emptyStateSubtext}>be the first to post an update</Text>
+            <MyBoldText style={styles.emptyStateText}>no updates yet</MyBoldText>
+            <MyText style={styles.emptyStateSubtext}>be the first to post an update</MyText>
           </View>
         }
       />
@@ -352,7 +357,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34,
     fontWeight: "700",
-    color: Colors.black,
+    color: Colors.brandGreen,
   },
   inactiveBadge: {
     paddingHorizontal: 8,
@@ -441,7 +446,7 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#999999",
     marginBottom: 8,
   },

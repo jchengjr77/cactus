@@ -1,8 +1,12 @@
+import { Colors } from "@/constants/Colors";
+import { useAuth } from "@/contexts/AuthContext";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from "react-native";
-import { useAuth } from "@/contexts/AuthContext";
-import { Colors } from "@/constants/Colors";
+import { Alert, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import MyText from "@/components/MyText";
+import MyTextInput from "@/components/MyTextInput";
+import MyHeading from "@/components/MyHeading";
+import MySemiBoldText from "@/components/MySemiBoldText";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -34,14 +38,14 @@ export default function LoginScreen() {
     >
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.logo}>cactus</Text>
-          <Text style={styles.tagline}>water your friendships</Text>
+          <MyHeading style={styles.logo}>cactus</MyHeading>
+          <MyText style={styles.tagline}>water your friendships</MyText>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>email</Text>
-            <TextInput
+            <MyText style={styles.label}>email</MyText>
+            <MyTextInput
               style={styles.input}
               value={email}
               onChangeText={setEmail}
@@ -54,8 +58,8 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>password</Text>
-            <TextInput
+            <MyText style={styles.label}>password</MyText>
+            <MyTextInput
               style={styles.input}
               value={password}
               onChangeText={setPassword}
@@ -71,14 +75,14 @@ export default function LoginScreen() {
             onPress={handleLogin}
             disabled={loading || !isFormValid}
           >
-            <Text style={styles.buttonText}>{loading ? "logging in..." : "log in"}</Text>
+            <MySemiBoldText style={styles.buttonText}>{loading ? "logging in..." : "log in"}</MySemiBoldText>
           </TouchableOpacity>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
+            <MyText style={styles.footerText}>Don't have an account? </MyText>
             <Link href="/signup" asChild>
               <TouchableOpacity>
-                <Text style={styles.link}>Sign up</Text>
+                <MySemiBoldText style={styles.link}>Sign up</MySemiBoldText>
               </TouchableOpacity>
             </Link>
           </View>

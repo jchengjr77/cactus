@@ -15,14 +15,17 @@ import {
 	Pressable,
 	ScrollView,
 	StyleSheet,
-	Text,
-	TextInput,
 	TouchableOpacity,
 	View,
 } from "react-native";
 import Gallery from 'react-native-awesome-gallery';
 import Reactions from "@/components/Reactions";
 import { MaterialIcons } from '@expo/vector-icons';
+import MyText from "@/components/MyText";
+import MyTextInput from "@/components/MyTextInput";
+import MyHeading from "@/components/MyHeading";
+import MyBoldText from "@/components/MyBoldText";
+import MySemiBoldText from "@/components/MySemiBoldText";
 
 // Component that manages gallery for an update
 function PhotoGallery({
@@ -469,16 +472,16 @@ export default function UpdateDetailsScreen() {
 						{ backgroundColor: item.user_avatar_color || "#E0E0E0" },
 					]}
 				>
-					<Text style={styles.avatarText}>
+					<MyText style={styles.avatarText}>
 						{item.user_name?.[0]?.toUpperCase() || "U"}
-					</Text>
+					</MyText>
 				</View>
 				<View style={styles.commentContentWrapper}>
 					<View style={styles.commentHeader}>
-						<Text style={styles.userName}>{item.user_name}</Text>
-						<Text style={styles.timestamp}>{formatTimeAgo(item.created_at)}</Text>
+						<MyBoldText style={styles.userName}>{item.user_name}</MyBoldText>
+						<MyText style={styles.timestamp}>{formatTimeAgo(item.created_at)}</MyText>
 					</View>
-					<Text style={styles.commentContent}>{item.content}</Text>
+					<MyText style={styles.commentContent}>{item.content}</MyText>
 				</View>
 			</View>
 		</View>
@@ -503,16 +506,16 @@ export default function UpdateDetailsScreen() {
 			<View style={styles.header}>
 				<View style={styles.headerTop}>
 					<TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-						<Text style={styles.backButtonText}>←</Text>
+						<MySemiBoldText style={styles.backButtonText}>←</MySemiBoldText>
 					</TouchableOpacity>
 					{update.group_id && (
 						<TouchableOpacity
 							style={styles.groupNameButton}
 							onPress={() => router.push(`/group/${update.group_id}`)}
 						>
-							<Text style={styles.groupNameText}>
+							<MyBoldText style={styles.groupNameText}>
 								{update.group_emoji ? `${update.group_emoji} ` : ''}{update.group_name}
-							</Text>
+							</MyBoldText>
 						</TouchableOpacity>
 					)}
 				</View>
@@ -529,7 +532,7 @@ export default function UpdateDetailsScreen() {
 						style={styles.closeButton}
 						onPress={() => setSelectedPhoto(null)}
 					>
-						<Text style={styles.closeButtonText}>✕</Text>
+						<MyText style={styles.closeButtonText}>✕</MyText>
 					</TouchableOpacity>
 					{selectedPhoto && galleryImages.length > 0 && (
 						<Gallery
@@ -557,8 +560,8 @@ export default function UpdateDetailsScreen() {
 						style={styles.editModalContent}
 						onPress={(e) => e.stopPropagation()}
 					>
-						<Text style={styles.modalTitle}>edit update</Text>
-						<TextInput
+						<MyBoldText style={styles.modalTitle}>edit update</MyBoldText>
+						<MyTextInput
 							style={styles.editTextArea}
 							value={editedContent}
 							onChangeText={(text) => {
@@ -572,22 +575,22 @@ export default function UpdateDetailsScreen() {
 							textAlignVertical="top"
 							maxLength={300}
 						/>
-						<Text style={styles.charCount}>{editedContent.length}/300</Text>
+						<MyText style={styles.charCount}>{editedContent.length}/300</MyText>
 						<View style={styles.modalButtons}>
 							<TouchableOpacity
 								style={styles.cancelButton}
 								onPress={() => setIsEditModalVisible(false)}
 							>
-								<Text style={styles.cancelButtonText}>cancel</Text>
+								<MySemiBoldText style={styles.cancelButtonText}>cancel</MySemiBoldText>
 							</TouchableOpacity>
 							<TouchableOpacity
 								style={[styles.saveButton, (!editedContent.trim() || isSaving) && styles.saveButtonDisabled]}
 								onPress={handleSaveEdit}
 								disabled={!editedContent.trim() || isSaving}
 							>
-								<Text style={[styles.saveButtonText, (!editedContent.trim() || isSaving) && styles.saveButtonTextDisabled]}>
+								<MySemiBoldText style={[styles.saveButtonText, (!editedContent.trim() || isSaving) && styles.saveButtonTextDisabled]}>
 									{isSaving ? "saving..." : "save"}
-								</Text>
+								</MySemiBoldText>
 							</TouchableOpacity>
 						</View>
 					</Pressable>
@@ -609,25 +612,25 @@ export default function UpdateDetailsScreen() {
 						style={styles.deleteModalContent}
 						onPress={(e) => e.stopPropagation()}
 					>
-						<Text style={styles.modalTitle}>delete update?</Text>
-						<Text style={styles.deleteWarning}>
+						<MyBoldText style={styles.modalTitle}>delete update?</MyBoldText>
+						<MyText style={styles.deleteWarning}>
 							this action cannot be undone
-						</Text>
+						</MyText>
 						<View style={styles.modalButtons}>
 							<TouchableOpacity
 								style={styles.cancelButton}
 								onPress={() => setShowDeleteConfirm(false)}
 							>
-								<Text style={styles.cancelButtonText}>cancel</Text>
+								<MySemiBoldText style={styles.cancelButtonText}>cancel</MySemiBoldText>
 							</TouchableOpacity>
 							<TouchableOpacity
 								style={[styles.deleteButton, isDeleting && styles.deleteButtonDisabled]}
 								onPress={handleDeleteUpdate}
 								disabled={isDeleting}
 							>
-								<Text style={[styles.deleteButtonText, isDeleting && styles.deleteButtonTextDisabled]}>
+								<MySemiBoldText style={[styles.deleteButtonText, isDeleting && styles.deleteButtonTextDisabled]}>
 									{isDeleting ? "deleting..." : "delete"}
-								</Text>
+								</MySemiBoldText>
 							</TouchableOpacity>
 						</View>
 					</Pressable>
@@ -654,18 +657,18 @@ export default function UpdateDetailsScreen() {
 											{ backgroundColor: update.user_avatar_color || "#E0E0E0" },
 										]}
 									>
-										<Text style={styles.avatarText}>
+										<MyText style={styles.avatarText}>
 											{update.user_name?.[0]?.toUpperCase() || "U"}
-										</Text>
+										</MyText>
 									</View>
 									<View style={styles.updateContentWrapper}>
 										<View style={styles.updateHeader}>
-											<Text style={styles.userName}>{update.user_name}</Text>
-											<Text style={styles.timestamp}>
+											<MyBoldText style={styles.userName}>{update.user_name}</MyBoldText>
+											<MyText style={styles.timestamp}>
 												{formatTimeAgo(update.created_at)}
-											</Text>
+											</MyText>
 										</View>
-										<Text style={styles.updateContent}>{update.content}</Text>
+										<MyText style={styles.updateContent}>{update.content}</MyText>
 										{update.media && update.media.length > 0 && (
 											<PhotoGallery
 												photoPaths={update.media}
@@ -710,14 +713,14 @@ export default function UpdateDetailsScreen() {
 				}
 				ListEmptyComponent={
 					<View style={styles.emptyState}>
-						<Text style={styles.emptyStateText}>no comments yet</Text>
-						<Text style={styles.emptyStateSubtext}>say what you wanna say</Text>
+						<MySemiBoldText style={styles.emptyStateText}>no comments yet</MySemiBoldText>
+						<MyText style={styles.emptyStateSubtext}>say what you wanna say</MyText>
 					</View>
 				}
 			/>
 
 			<View style={styles.commentInputContainer}>
-				<TextInput
+				<MyTextInput
 					style={styles.commentInput}
 					value={commentInput}
 					onChangeText={setCommentInput}
@@ -734,7 +737,7 @@ export default function UpdateDetailsScreen() {
 					onPress={handleSubmitComment}
 					disabled={!commentInput.trim() || submitting}
 				>
-					<Text
+					<MySemiBoldText
 						style={[
 							styles.submitButtonText,
 							(!commentInput.trim() || submitting) &&
@@ -742,7 +745,7 @@ export default function UpdateDetailsScreen() {
 						]}
 					>
 						{submitting ? "..." : "post"}
-					</Text>
+					</MySemiBoldText>
 				</TouchableOpacity>
 			</View>
 		</KeyboardAvoidingView>
@@ -785,7 +788,6 @@ const styles = StyleSheet.create({
 	backButtonText: {
 		fontSize: 16,
 		color: Colors.brandGreen,
-		fontWeight: "600",
 	},
 	groupNameButton: {
 		flex: 1,
@@ -793,7 +795,6 @@ const styles = StyleSheet.create({
 	},
 	groupNameText: {
 		fontSize: 17,
-		fontWeight: "600",
 		color: Colors.black,
 		borderWidth: 1,
 		borderColor: Colors.lightGrey,
@@ -816,7 +817,6 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 17,
-		fontWeight: "600",
 		color: Colors.black,
 	},
 	loadingContainer: {
@@ -848,7 +848,6 @@ const styles = StyleSheet.create({
 	},
 	avatarText: {
 		fontSize: 16,
-		fontWeight: "600",
 		color: "#666666",
 	},
 	updateContentWrapper: {
@@ -862,7 +861,6 @@ const styles = StyleSheet.create({
 	},
 	userName: {
 		fontSize: 15,
-		fontWeight: "600",
 		color: Colors.black,
 	},
 	timestamp: {
@@ -913,7 +911,6 @@ const styles = StyleSheet.create({
 	},
 	emptyStateText: {
 		fontSize: 16,
-		fontWeight: "600",
 		color: "#999999",
 		marginBottom: 4,
 	},
@@ -961,7 +958,6 @@ const styles = StyleSheet.create({
 	},
 	submitButtonText: {
 		fontSize: 15,
-		fontWeight: "600",
 		color: Colors.background,
 	},
 	submitButtonTextDisabled: {
@@ -1022,7 +1018,6 @@ const styles = StyleSheet.create({
 	},
 	modalTitle: {
 		fontSize: 20,
-		fontWeight: "700",
 		color: Colors.black,
 	},
 	editTextArea: {
@@ -1064,7 +1059,6 @@ const styles = StyleSheet.create({
 	},
 	cancelButtonText: {
 		fontSize: 16,
-		fontWeight: "600",
 		color: Colors.black,
 	},
 	saveButton: {
@@ -1081,7 +1075,6 @@ const styles = StyleSheet.create({
 	},
 	saveButtonText: {
 		fontSize: 16,
-		fontWeight: "600",
 		color: Colors.background,
 	},
 	saveButtonTextDisabled: {
@@ -1101,7 +1094,6 @@ const styles = StyleSheet.create({
 	},
 	deleteButtonText: {
 		fontSize: 16,
-		fontWeight: "600",
 		color: Colors.background,
 	},
 	deleteButtonTextDisabled: {

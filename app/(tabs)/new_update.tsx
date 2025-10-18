@@ -1,3 +1,7 @@
+import MyHeading from "@/components/MyHeading";
+import MySemiBoldText from "@/components/MySemiBoldText";
+import MyText from "@/components/MyText";
+import MyTextInput from "@/components/MyTextInput";
 import { Colors } from "@/constants/Colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -6,7 +10,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { v4 as uuidv4 } from 'uuid';
 
 interface GroupMember {
@@ -231,7 +235,7 @@ export default function NewUpdateScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>new update</Text>
+          <MyHeading style={styles.title}>new update</MyHeading>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.brandGreen} />
@@ -243,20 +247,20 @@ export default function NewUpdateScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>new update</Text>
+        <MyHeading style={styles.title}>new update</MyHeading>
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         <View style={styles.groupSelector}>
-          <Text style={styles.label}>select group</Text>
+          <MySemiBoldText style={styles.label}>select group</MySemiBoldText>
           {groups.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>you're not in any active groups yet</Text>
+              <MyText style={styles.emptyStateText}>you're not in any active groups yet</MyText>
               <TouchableOpacity
                 style={styles.createGroupButton}
                 onPress={() => router.push("/(tabs)/groups")}
               >
-                <Text style={styles.createGroupButtonText}>+ create a group</Text>
+                <MySemiBoldText style={styles.createGroupButtonText}>+ create a group</MySemiBoldText>
               </TouchableOpacity>
             </View>
           ) : (
@@ -270,8 +274,8 @@ export default function NewUpdateScreen() {
                   ]}
                   onPress={() => setSelectedGroup(group)}
                 >
-                  <Text style={styles.groupCardName}>{group.name}</Text>
-                  <Text style={styles.groupCardEmoji}>{group.emoji_icon || '📁'}</Text>
+                  <MySemiBoldText style={styles.groupCardName}>{group.name}</MySemiBoldText>
+                  <MyText style={styles.groupCardEmoji}>{group.emoji_icon || '📁'}</MyText>
                   <View style={styles.avatarStack}>
                     {(group.memberData || []).slice(0, 4).map((member, index) => (
                       <View
@@ -285,16 +289,16 @@ export default function NewUpdateScreen() {
                           }
                         ]}
                       >
-                        <Text style={styles.stackedAvatarText}>
+                        <MySemiBoldText style={styles.stackedAvatarText}>
                           {member.name[0]?.toUpperCase() || 'U'}
-                        </Text>
+                        </MySemiBoldText>
                       </View>
                     ))}
                     {(group.memberData || []).length > 4 && (
                       <View style={[styles.stackedAvatar, styles.moreAvatar, { marginLeft: -8 }]}>
-                        <Text style={styles.moreAvatarText}>
+                        <MySemiBoldText style={styles.moreAvatarText}>
                           +{(group.memberData || []).length - 4}
-                        </Text>
+                        </MySemiBoldText>
                       </View>
                     )}
                   </View>
@@ -306,12 +310,12 @@ export default function NewUpdateScreen() {
 
         <View style={styles.updateInput}>
           <View style={styles.labelRow}>
-            <Text style={styles.label}>your update</Text>
-            <Text style={[styles.charCount, updateText.length > 300 && styles.charCountError]}>
+            <MySemiBoldText style={styles.label}>your update</MySemiBoldText>
+            <MyText style={[styles.charCount, updateText.length > 300 && styles.charCountError]}>
               {updateText.length}/300
-            </Text>
+            </MyText>
           </View>
-          <TextInput
+          <MyTextInput
             style={styles.textArea}
             value={updateText}
             onChangeText={(text) => {
@@ -331,9 +335,9 @@ export default function NewUpdateScreen() {
           {
             selectedPhotos.length > 0 && (
               <View style={styles.photoHeader}>
-                <Text style={styles.label}>photos</Text>
+                <MySemiBoldText style={styles.label}>photos</MySemiBoldText>
                 {selectedPhotos.length > 0 && (
-                  <Text style={styles.photoCount}>{selectedPhotos.length}/5</Text>
+                  <MyText style={styles.photoCount}>{selectedPhotos.length}/5</MyText>
                 )}
               </View>
             )
@@ -358,9 +362,9 @@ export default function NewUpdateScreen() {
           {selectedPhotos.length < 5 && (
             <TouchableOpacity style={styles.addPhotoButton} onPress={pickImages}>
               <MaterialIcons name="add-photo-alternate" size={24} color={Colors.brandGreen} />
-              <Text style={styles.addPhotoText}>
+              <MySemiBoldText style={styles.addPhotoText}>
                 {selectedPhotos.length === 0 ? 'add pics' : 'add more pics'}
-              </Text>
+              </MySemiBoldText>
             </TouchableOpacity>
           )}
         </View>
@@ -370,9 +374,9 @@ export default function NewUpdateScreen() {
           onPress={handlePost}
           disabled={!canPost}
         >
-          <Text style={[styles.postButtonText, !canPost && styles.postButtonTextDisabled]}>
+          <MySemiBoldText style={[styles.postButtonText, !canPost && styles.postButtonTextDisabled]}>
             {posting ? "posting..." : "post"}
-          </Text>
+          </MySemiBoldText>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -396,8 +400,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 34,
-    fontWeight: "700",
-    color: Colors.black,
+    color: Colors.brandGreen,
   },
   postButton: {
     height: 48,
@@ -411,7 +414,6 @@ const styles = StyleSheet.create({
   },
   postButtonText: {
     fontSize: 16,
-    fontWeight: "600",
     color: Colors.background,
   },
   postButtonTextDisabled: {
@@ -434,7 +436,6 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: "500",
     color: Colors.black,
   },
   groupGrid: {
@@ -459,7 +460,6 @@ const styles = StyleSheet.create({
   },
   groupCardName: {
     fontSize: 13,
-    fontWeight: "600",
     color: Colors.black,
     textAlign: "center",
   },
@@ -482,7 +482,6 @@ const styles = StyleSheet.create({
   },
   stackedAvatarText: {
     fontSize: 11,
-    fontWeight: "600",
     color: "#666666",
   },
   moreAvatar: {
@@ -490,7 +489,6 @@ const styles = StyleSheet.create({
   },
   moreAvatarText: {
     fontSize: 9,
-    fontWeight: "600",
     color: "#666666",
   },
   updateInput: {
@@ -539,7 +537,6 @@ const styles = StyleSheet.create({
   },
   createGroupButtonText: {
     fontSize: 16,
-    fontWeight: "600",
     color: Colors.brandGreen,
   },
   photoSection: {
@@ -592,6 +589,5 @@ const styles = StyleSheet.create({
   addPhotoText: {
     fontSize: 15,
     color: Colors.brandGreen,
-    fontWeight: "500",
   },
 });

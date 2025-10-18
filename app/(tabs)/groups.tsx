@@ -1,10 +1,13 @@
+import MyBoldText from "@/components/MyBoldText";
+import MyHeading from "@/components/MyHeading";
+import MyText from "@/components/MyText";
 import { Colors } from "@/constants/Colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Group } from "@/types/database";
-import { useRouter, useFocusEffect } from "expo-router";
-import { useEffect, useState, useCallback } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface GroupWithMembers extends Group {
   memberNames?: string[];
@@ -115,25 +118,25 @@ export default function GroupsScreen() {
         onPress={() => router.push(`/group/${item.id}`)}
       >
         <View style={styles.groupHeader}>
-          <Text style={styles.groupName}>
+          <MyBoldText style={styles.groupName}>
             {item.emoji_icon ? `${item.emoji_icon} ` : ''}{item.name}
-          </Text>
+          </MyBoldText>
           {!item.is_active ? (
             <View style={styles.inactiveBadge}>
-              <Text style={styles.inactiveBadgeText}>inactive</Text>
+              <MyText style={styles.inactiveBadgeText}>inactive</MyText>
             </View>
           ) : (
-            <Text style={styles.pointsDisplay}>
-              <Text style={styles.pointsAmount}>{item.points || 0}</Text>
-              <Text style={styles.pointsLabel}> pts</Text>
-            </Text>
+            <MyText style={styles.pointsDisplay}>
+              <MyBoldText style={styles.pointsAmount}>{item.points || 0}</MyBoldText>
+              <MyText style={styles.pointsLabel}> pts</MyText>
+            </MyText>
           )}
         </View>
 
         <View style={styles.groupDetails}>
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Updates</Text>
-            <Text style={styles.detailValue}>
+            <MyText style={styles.detailLabel}>Updates</MyText>
+            <MyText style={styles.detailValue}>
               {item.cadence_hrs < 24
                 ? `Every ${item.cadence_hrs}h`
                 : item.cadence_hrs === 24
@@ -141,20 +144,20 @@ export default function GroupsScreen() {
                 : item.cadence_hrs === 168
                 ? "Weekly"
                 : `Every ${Math.floor(item.cadence_hrs / 24)}d`}
-            </Text>
+            </MyText>
           </View>
 
           <View style={styles.membersRow}>
-            <Text style={styles.detailLabel}>Members</Text>
+            <MyText style={styles.detailLabel}>Members</MyText>
             <View style={styles.memberBadges}>
               {displayMembers.map((name, index) => (
                 <View key={index} style={styles.memberBadge}>
-                  <Text style={styles.memberBadgeText}>{name}</Text>
+                  <MyText style={styles.memberBadgeText}>{name}</MyText>
                 </View>
               ))}
               {remainingCount > 0 && (
                 <View style={styles.memberBadge}>
-                  <Text style={styles.memberBadgeText}>+{remainingCount} more</Text>
+                  <MyText style={styles.memberBadgeText}>+{remainingCount} more</MyText>
                 </View>
               )}
             </View>
@@ -170,7 +173,7 @@ export default function GroupsScreen() {
       onPress={() => router.push("/group/create_group")}
     >
       <View style={styles.createCardContent}>
-        <Text style={styles.createCardText}>+ new group</Text>
+        <MyText style={styles.createCardText}>+ new group</MyText>
       </View>
     </TouchableOpacity>
   );
@@ -179,7 +182,7 @@ export default function GroupsScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>groups</Text>
+          <MyHeading style={styles.title}>groups</MyHeading>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4A7C59" />
@@ -191,7 +194,7 @@ export default function GroupsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>groups</Text>
+        <MyHeading style={styles.title}>groups</MyHeading>
       </View>
 
       <FlatList
@@ -205,8 +208,8 @@ export default function GroupsScreen() {
         ListFooterComponent={renderCreateCard}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>no groups yet</Text>
-            <Text style={styles.emptyStateSubtext}>create your first group to get started</Text>
+            <MyText style={styles.emptyStateText}>no groups yet</MyText>
+            <MyText style={styles.emptyStateSubtext}>create your first group to get started</MyText>
           </View>
         }
       />
@@ -232,7 +235,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34,
     fontWeight: "700",
-    color: Colors.black,
+    color: Colors.brandGreen,
   },
   headerButton: {
     paddingHorizontal: 16,
@@ -261,7 +264,7 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#999999",
     marginBottom: 8,
   },
@@ -291,7 +294,7 @@ const styles = StyleSheet.create({
   },
   groupName: {
     fontSize: 20,
-    fontWeight: "600",
+    fontWeight: "700",
     color: Colors.black,
   },
   inactiveBadge: {

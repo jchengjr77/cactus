@@ -4,7 +4,12 @@ import { supabase } from "@/lib/supabase";
 import { Notification } from "@/types/database";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, StyleSheet,  TouchableOpacity, View } from "react-native";
+import MyText from "@/components/MyText";
+import MyTextInput from "@/components/MyTextInput";
+import MyHeading from "@/components/MyHeading";
+import MyBoldText from "@/components/MyBoldText";
+import MySemiBoldText from "@/components/MySemiBoldText";
 
 export default function GroupInviteScreen() {
 	const router = useRouter();
@@ -139,9 +144,9 @@ export default function GroupInviteScreen() {
 		return (
 			<View style={styles.container}>
 				<View style={styles.errorContainer}>
-					<Text style={styles.errorText}>Invitation not found</Text>
+					<MyText style={styles.errorText}>Invitation not found</MyText>
 					<TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-						<Text style={styles.backButtonText}>Go back</Text>
+						<MyText style={styles.backButtonText}>Go back</MyText>
 					</TouchableOpacity>
 				</View>
 			</View>
@@ -152,16 +157,16 @@ export default function GroupInviteScreen() {
 		<View style={styles.container}>
 			<View style={styles.header}>
 				<TouchableOpacity onPress={() => router.back()} style={styles.backButtonHeader}>
-					<Text style={styles.backButtonHeaderText}>←</Text>
+					<MySemiBoldText style={styles.backButtonHeaderText}>←</MySemiBoldText>
 				</TouchableOpacity>
 			</View>
 
 			<View style={styles.content}>
-				<Text style={styles.emoji}>{notification.data.group_emoji}</Text>
-				<Text style={styles.title}>group invitation</Text>
-				<Text style={styles.message}>
-					You've been invited to join <Text style={styles.groupName}>{notification.data.group_name}</Text>
-				</Text>
+				<MyText style={styles.emoji}>{notification.data.group_emoji}</MyText>
+				<MyHeading style={styles.title}>group invitation</MyHeading>
+				<MyText style={styles.message}>
+					You've been invited to join <MyBoldText style={styles.groupName}>{notification.data.group_name}</MyBoldText>
+				</MyText>
 
 				<View style={styles.actions}>
 					<TouchableOpacity
@@ -173,12 +178,12 @@ export default function GroupInviteScreen() {
 						onPress={handleAccept}
 						disabled={processing || isAlreadyMember}
 					>
-						<Text style={[
+						<MySemiBoldText style={[
 							styles.acceptButtonText,
 							isAlreadyMember && styles.acceptButtonTextDisabled
 						]}>
 							{isAlreadyMember ? "already joined" : processing ? "accepting..." : "accept"}
-						</Text>
+						</MySemiBoldText>
 					</TouchableOpacity>
 				</View>
 			</View>
@@ -202,7 +207,6 @@ const styles = StyleSheet.create({
 	backButtonHeaderText: {
 		fontSize: 16,
 		color: Colors.brandGreen,
-		fontWeight: "600",
 	},
 	content: {
 		flex: 1,
@@ -216,8 +220,7 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 28,
-		fontWeight: "700",
-		color: Colors.black,
+		color: Colors.brandGreen,
 		textAlign: "center",
 	},
 	message: {
@@ -228,7 +231,6 @@ const styles = StyleSheet.create({
 		maxWidth: 300,
 	},
 	groupName: {
-		fontWeight: "600",
 		color: Colors.brandGreen,
 	},
 	actions: {
@@ -250,7 +252,6 @@ const styles = StyleSheet.create({
 	},
 	acceptButtonText: {
 		fontSize: 16,
-		fontWeight: "600",
 		color: Colors.background,
 	},
 	acceptButtonTextDisabled: {
@@ -280,7 +281,6 @@ const styles = StyleSheet.create({
 	},
 	backButtonText: {
 		fontSize: 16,
-		fontWeight: "600",
 		color: Colors.background,
 	},
 });

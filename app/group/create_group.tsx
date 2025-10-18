@@ -4,8 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from '@/lib/supabase';
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import EmojiPicker from "rn-emoji-keyboard";
+import MyText from "@/components/MyText";
+import MyTextInput from "@/components/MyTextInput";
+import MyHeading from "@/components/MyHeading";
+import MyBoldText from "@/components/MyBoldText";
+import MySemiBoldText from "@/components/MySemiBoldText";
 
 type CadenceOption = { label: string; hours: number };
 type StakeOption = { emoji: string; name: string; amount: number };
@@ -176,19 +181,19 @@ export default function CreateGroupScreen() {
 	if (showSuccess) {
 		return <View style={styles.container}>
 			<View style={styles.successContainer}>
-				<Text style={styles.successEmoji}>{groupEmoji}</Text>
-				<Text style={styles.successTitle}>{groupName}</Text>
-				<Text style={styles.successMessage}>
+				<MyText style={styles.successEmoji}>{groupEmoji}</MyText>
+				<MyHeading style={styles.successTitle}>{groupName}</MyHeading>
+				<MyText style={styles.successMessage}>
 					has been created.
-				</Text>
-				<Text style={styles.successMessage}>
+				</MyText>
+				<MyText style={styles.successMessage}>
 					Members have been sent an invitation.
-				</Text>
+				</MyText>
 				<TouchableOpacity
 					style={styles.successButton}
 					onPress={() => router.back()}
 				>
-					<Text style={styles.successButtonText}>done</Text>
+					<MySemiBoldText style={styles.successButtonText}>done</MySemiBoldText>
 				</TouchableOpacity>
 			</View>
 		</View>
@@ -197,28 +202,28 @@ export default function CreateGroupScreen() {
 	return <View style={styles.container}>
 		<View style={styles.header}>
 			<TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-				<Text style={styles.backButtonText}>←</Text>
+				<MySemiBoldText style={styles.backButtonText}>←</MySemiBoldText>
 			</TouchableOpacity>
 			<View style={styles.titleRow}>
 				<View style={styles.titleContainer}>
-					<Text style={styles.title}>
+					<MyHeading style={styles.title}>
 						new group
-					</Text>
+					</MyHeading>
 				</View>
 			</View>
 		</View>
 		<ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
 			{/* Group Name and Emoji Row */}
 			<View style={styles.fieldContainer}>
-				<Text style={styles.label}>group name</Text>
+				<MySemiBoldText style={styles.label}>group name</MySemiBoldText>
 				<View style={styles.nameEmojiRow}>
 					<TouchableOpacity
 						style={styles.emojiSelector}
 						onPress={() => setIsEmojiPickerOpen(true)}
 					>
-						<Text style={styles.emojiText}>{groupEmoji}</Text>
+						<MyText style={styles.emojiText}>{groupEmoji}</MyText>
 					</TouchableOpacity>
-					<TextInput
+					<MyTextInput
 						style={styles.nameInput}
 						value={groupName}
 						onChangeText={setGroupName}
@@ -230,8 +235,8 @@ export default function CreateGroupScreen() {
 
 			{/* Invite Members */}
 			<View style={styles.fieldContainer}>
-				<Text style={styles.label}>invite members</Text>
-				<TextInput
+				<MySemiBoldText style={styles.label}>invite members</MySemiBoldText>
+				<MyTextInput
 					style={styles.emailInput}
 					value={emailInput}
 					onChangeText={(text) => {
@@ -246,16 +251,16 @@ export default function CreateGroupScreen() {
 					returnKeyType="done"
 				/>
 				{emailError !== "" && (
-					<Text style={styles.errorText}>{emailError}</Text>
+					<MyText style={styles.errorText}>{emailError}</MyText>
 				)}
 				{members.length > 0 && (
 					<View style={styles.emailBadgeContainer}>
 						{members.map((member, index) => (
 							<View key={index} style={styles.emailBadge}>
-								<Text style={styles.emailBadgeText}>{member.displayName}</Text>
+								<MyText style={styles.emailBadgeText}>{member.displayName}</MyText>
 								{member.email !== user?.email && (
 									<TouchableOpacity onPress={() => handleRemoveMember(member.email)}>
-										<Text style={styles.emailBadgeRemove}>×</Text>
+										<MyText style={styles.emailBadgeRemove}>×</MyText>
 									</TouchableOpacity>
 								)}
 							</View>
@@ -266,7 +271,7 @@ export default function CreateGroupScreen() {
 
 			{/* Cadence Selector */}
 			<View style={styles.fieldContainer}>
-				<Text style={styles.label}>cadence</Text>
+				<MySemiBoldText style={styles.label}>cadence</MySemiBoldText>
 				<View style={styles.optionRow}>
 					{cadenceOptions.map((option) => (
 						<TouchableOpacity
@@ -277,12 +282,12 @@ export default function CreateGroupScreen() {
 							]}
 							onPress={() => setCadence(option.hours)}
 						>
-							<Text style={[
+							<MySemiBoldText style={[
 								styles.optionBadgeText,
 								cadence === option.hours && styles.optionBadgeTextSelected
 							]}>
 								{option.label}
-							</Text>
+							</MySemiBoldText>
 						</TouchableOpacity>
 					))}
 				</View>
@@ -290,7 +295,7 @@ export default function CreateGroupScreen() {
 
 			{/* Stakes Selector */}
 			<View style={styles.fieldContainer}>
-				<Text style={styles.label}>stakes</Text>
+				<MySemiBoldText style={styles.label}>stakes</MySemiBoldText>
 				<View style={styles.optionRow}>
 					{stakeOptions.map((option) => (
 						<TouchableOpacity
@@ -304,13 +309,13 @@ export default function CreateGroupScreen() {
 								setStakeName(option.name);
 							}}
 						>
-							<Text style={styles.stakeEmoji}>{option.emoji}</Text>
-							<Text style={[
+							<MyText style={styles.stakeEmoji}>{option.emoji}</MyText>
+							<MySemiBoldText style={[
 								styles.stakeBadgeText,
 								stakeAmount === option.amount && styles.stakeBadgeTextSelected
 							]}>
 								${option.amount}
-							</Text>
+							</MySemiBoldText>
 						</TouchableOpacity>
 					))}
 				</View>
@@ -321,9 +326,9 @@ export default function CreateGroupScreen() {
 				onPress={handleCreate}
 				disabled={!canCreate}
 			>
-				<Text style={[styles.createButtonText, !canCreate && styles.createButtonTextDisabled]}>
+				<MySemiBoldText style={[styles.createButtonText, !canCreate && styles.createButtonTextDisabled]}>
 					{creating ? "creating..." : "create group"}
-				</Text>
+				</MySemiBoldText>
 			</TouchableOpacity>
 		</ScrollView>
 
@@ -353,7 +358,6 @@ const styles = StyleSheet.create({
 	backButtonText: {
 		fontSize: 16,
 		color: Colors.brandGreen,
-		fontWeight: "600",
 	},
 	titleRow: {
 		flexDirection: "row",
@@ -369,7 +373,6 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 34,
-		fontWeight: "700",
 		color: Colors.brandGreen,
 	},
 	content: {
@@ -381,7 +384,6 @@ const styles = StyleSheet.create({
 	},
 	label: {
 		fontSize: 14,
-		fontWeight: "500",
 		color: Colors.black,
 		marginBottom: 8,
 	},
@@ -455,7 +457,6 @@ const styles = StyleSheet.create({
 	},
 	emailBadgeRemove: {
 		fontSize: 20,
-		fontWeight: "600",
 		color: "#999999",
 		paddingHorizontal: 4,
 	},
@@ -482,12 +483,10 @@ const styles = StyleSheet.create({
 	},
 	optionBadgeText: {
 		fontSize: 14,
-		fontWeight: "500",
 		color: "#666666",
 	},
 	optionBadgeTextSelected: {
 		color: Colors.background,
-		fontWeight: "600",
 	},
 	// Stakes Options
 	stakeBadge: {
@@ -511,12 +510,10 @@ const styles = StyleSheet.create({
 	},
 	stakeBadgeText: {
 		fontSize: 14,
-		fontWeight: "500",
 		color: "#666666",
 	},
 	stakeBadgeTextSelected: {
 		color: Colors.background,
-		fontWeight: "600",
 	},
 	// Create Button
 	createButton: {
@@ -532,7 +529,6 @@ const styles = StyleSheet.create({
 	},
 	createButtonText: {
 		fontSize: 16,
-		fontWeight: "600",
 		color: Colors.background,
 	},
 	createButtonTextDisabled: {
@@ -551,7 +547,6 @@ const styles = StyleSheet.create({
 	},
 	successTitle: {
 		fontSize: 32,
-		fontWeight: "700",
 		color: Colors.brandGreen,
 		textAlign: "center",
 		marginBottom: -12,
@@ -574,7 +569,6 @@ const styles = StyleSheet.create({
 	},
 	successButtonText: {
 		fontSize: 16,
-		fontWeight: "600",
 		color: Colors.background,
 	},
 })

@@ -2,8 +2,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Modal, ScrollView, StyleSheet,  TouchableOpacity, View } from "react-native";
 import { Colors } from "@/constants/Colors";
+import MyText from "@/components/MyText";
+import MyTextInput from "@/components/MyTextInput";
+import MyHeading from "@/components/MyHeading";
+import MyBoldText from "@/components/MyBoldText";
+import MySemiBoldText from "@/components/MySemiBoldText";
 
 export default function AccountScreen() {
   const router = useRouter();
@@ -110,7 +115,7 @@ export default function AccountScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>account</Text>
+        <MyHeading style={styles.title}>account</MyHeading>
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
@@ -122,48 +127,48 @@ export default function AccountScreen() {
           <>
             <View style={styles.profileSection}>
               <View style={[styles.avatarLarge, { backgroundColor: userAvatarColor || '#E0E0E0' }]}>
-                <Text style={styles.avatarLargeText}>{userName?.[0]?.toUpperCase() || userEmail?.[0]?.toUpperCase() || "U"}</Text>
+                <MySemiBoldText style={styles.avatarLargeText}>{userName?.[0]?.toUpperCase() || userEmail?.[0]?.toUpperCase() || "U"}</MySemiBoldText>
               </View>
-              <Text style={styles.userName}>{userName || "user name"}</Text>
-              <Text style={styles.userEmail}>{userEmail || "user@example.com"}</Text>
+              <MyBoldText style={styles.userName}>{userName || "user name"}</MyBoldText>
+              <MyText style={styles.userEmail}>{userEmail || "user@example.com"}</MyText>
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>stats</Text>
+              <MySemiBoldText style={styles.sectionTitle}>stats</MySemiBoldText>
               <View style={styles.statsGrid}>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{stats.groupCount}</Text>
-                  <Text style={styles.statLabel}>groups</Text>
+                  <MyBoldText style={styles.statValue}>{stats.groupCount}</MyBoldText>
+                  <MyText style={styles.statLabel}>groups</MyText>
                 </View>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{stats.updateCount}</Text>
-                  <Text style={styles.statLabel}>updates</Text>
+                  <MyBoldText style={styles.statValue}>{stats.updateCount}</MyBoldText>
+                  <MyText style={styles.statLabel}>updates</MyText>
                 </View>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{stats.consistency}%</Text>
-                  <Text style={styles.statLabel}>consistency</Text>
+                  <MyBoldText style={styles.statValue}>{stats.consistency}%</MyBoldText>
+                  <MyText style={styles.statLabel}>consistency</MyText>
                 </View>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>${stats.totalTab}</Text>
-                  <Text style={styles.statLabel}>total tab</Text>
+                  <MyBoldText style={styles.statValue}>${stats.totalTab}</MyBoldText>
+                  <MyText style={styles.statLabel}>total tab</MyText>
                 </View>
               </View>
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>settings</Text>
+              <MySemiBoldText style={styles.sectionTitle}>settings</MySemiBoldText>
               <TouchableOpacity style={[styles.menuItem, styles.menuItemDisabled]} disabled>
-                <Text style={[styles.menuItemText, styles.menuItemTextDisabled]}>edit profile</Text>
-                <Text style={[styles.menuItemArrow, styles.menuItemArrowDisabled]}>›</Text>
+                <MyText style={[styles.menuItemText, styles.menuItemTextDisabled]}>edit profile</MyText>
+                <MyText style={[styles.menuItemArrow, styles.menuItemArrowDisabled]}>›</MyText>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.menuItem, styles.menuItemDisabled]} disabled>
-                <Text style={[styles.menuItemText, styles.menuItemTextDisabled]}>privacy</Text>
-                <Text style={[styles.menuItemArrow, styles.menuItemArrowDisabled]}>›</Text>
+                <MyText style={[styles.menuItemText, styles.menuItemTextDisabled]}>privacy</MyText>
+                <MyText style={[styles.menuItemArrow, styles.menuItemArrowDisabled]}>›</MyText>
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity style={styles.logoutButton} onPress={handleLogoutPress}>
-              <Text style={styles.logoutButtonText}>log out</Text>
+              <MySemiBoldText style={styles.logoutButtonText}>log out</MySemiBoldText>
             </TouchableOpacity>
           </>
         )}
@@ -185,13 +190,13 @@ export default function AccountScreen() {
             activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
           >
-            <Text style={styles.modalTitle}>log out of your account?</Text>
+            <MySemiBoldText style={styles.modalTitle}>log out of your account?</MySemiBoldText>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.modalButtonCancel} onPress={handleCancelLogout}>
-                <Text style={styles.modalButtonCancelText}>cancel</Text>
+                <MySemiBoldText style={styles.modalButtonCancelText}>cancel</MySemiBoldText>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalButtonConfirm} onPress={handleConfirmLogout}>
-                <Text style={styles.modalButtonConfirmText}>log out</Text>
+                <MySemiBoldText style={styles.modalButtonConfirmText}>log out</MySemiBoldText>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -215,8 +220,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 34,
-    fontWeight: "700",
-    color: Colors.black,
+    color: Colors.brandGreen,
   },
   content: {
     flex: 1,
@@ -239,12 +243,10 @@ const styles = StyleSheet.create({
   },
   avatarLargeText: {
     fontSize: 32,
-    fontWeight: "600",
     color: "#666666",
   },
   userName: {
     fontSize: 20,
-    fontWeight: "600",
     color: Colors.black,
     marginTop: 8,
   },
@@ -257,7 +259,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    fontWeight: "600",
     color: "#666666",
     textTransform: "uppercase",
     letterSpacing: 1,
@@ -306,7 +307,6 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 24,
-    fontWeight: "600",
     color: Colors.brandGreen,
   },
   statLabel: {
@@ -325,7 +325,6 @@ const styles = StyleSheet.create({
   },
   logoutButtonText: {
     fontSize: 16,
-    fontWeight: "600",
     color: "#EF4444",
   },
   loadingContainer: {
@@ -351,7 +350,6 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: "600",
     color: Colors.black,
   },
   modalText: {
@@ -376,7 +374,6 @@ const styles = StyleSheet.create({
   },
   modalButtonCancelText: {
     fontSize: 16,
-    fontWeight: "600",
     color: Colors.black,
   },
   modalButtonConfirm: {
@@ -391,7 +388,6 @@ const styles = StyleSheet.create({
   },
   modalButtonConfirmText: {
     fontSize: 16,
-    fontWeight: "600",
     color: "#EF4444",
   },
 });

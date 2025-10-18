@@ -1,10 +1,15 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View,  StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Notification } from "@/types/database";
 import { useRouter } from "expo-router";
 import { Colors } from "@/constants/Colors";
+import MyText from "@/components/MyText";
+import MyTextInput from "@/components/MyTextInput";
+import MyHeading from "@/components/MyHeading";
+import MyBoldText from "@/components/MyBoldText";
+import MySemiBoldText from "@/components/MySemiBoldText";
 
 const PAGE_SIZE = 20;
 
@@ -154,13 +159,13 @@ export default function NotificationsScreen() {
       >
         <View style={styles.notificationContent}>
           <View style={styles.notificationHeader}>
-            <Text style={styles.notificationTitle}>{title}</Text>
+            <MyBoldText style={styles.notificationTitle}>{title}</MyBoldText>
             <View style={styles.timestampContainer}>
-              <Text style={styles.notificationTime}>{formatTime(item.created_at)}</Text>
+              <MyText style={styles.notificationTime}>{formatTime(item.created_at)}</MyText>
               {!item.opened && <View style={styles.unreadDot} />}
             </View>
           </View>
-          <Text style={styles.notificationMessage}>{message}</Text>
+          <MyText style={styles.notificationMessage}>{message}</MyText>
         </View>
       </TouchableOpacity>
     );
@@ -170,7 +175,7 @@ export default function NotificationsScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>notifications</Text>
+          <MyHeading style={styles.title}>notifications</MyHeading>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4A7C59" />
@@ -182,7 +187,7 @@ export default function NotificationsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>notifications</Text>
+        <MyHeading style={styles.title}>notifications</MyHeading>
       </View>
 
       <FlatList
@@ -198,7 +203,7 @@ export default function NotificationsScreen() {
         ListFooterComponent={renderFooter}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>don't worry, i'm sure something'll pop up</Text>
+            <MyText style={styles.emptyStateText}>don't worry, i'm sure something'll pop up</MyText>
           </View>
         }
       />
@@ -220,8 +225,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 34,
-    fontWeight: "700",
-    color: "#000000",
+    color: Colors.brandGreen,
   },
   contentContainer: {
     padding: 24,
@@ -262,7 +266,6 @@ const styles = StyleSheet.create({
   },
   notificationTitle: {
     fontSize: 14,
-    fontWeight: "600",
     color: "#000000",
   },
   timestampContainer: {

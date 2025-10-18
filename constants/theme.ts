@@ -4,12 +4,16 @@
  */
 
 export const Fonts = {
-  regular: "JetBrainsMono-Regular",
-  medium: "JetBrainsMono-Medium",
-  semibold: "JetBrainsMono-SemiBold",
-  bold: "JetBrainsMono-Bold",
+  regular: "JetBrainsMono_400Regular",
+  medium: "JetBrainsMono_500Medium",
+  semibold: "JetBrainsMono_600SemiBold",
+  bold: "JetBrainsMono_700Bold",
+  extrabold: "JetBrainsMono_800ExtraBold",
   // Default font for all text
-  default: "JetBrainsMono-Regular",
+  default: "JetBrainsMono_400Regular",
+  // Recommended fonts for specific use cases
+  heading: "JetBrainsMono_700Bold", // For titles, headings, and important labels
+  body: "JetBrainsMono_400Regular", // For body text
 };
 
 export const Colors = {

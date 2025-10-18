@@ -1,8 +1,12 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Colors } from "@/constants/Colors";
+import MyText from "@/components/MyText";
+import MyTextInput from "@/components/MyTextInput";
+import MyHeading from "@/components/MyHeading";
+import MySemiBoldText from "@/components/MySemiBoldText";
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -48,15 +52,15 @@ export default function SignupScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.verificationContainer}>
-          <Text style={styles.logo}>welcome</Text>
-          <Text style={styles.verificationText}>
+          <MyHeading style={styles.logo}>welcome</MyHeading>
+          <MyText style={styles.verificationText}>
             Click the verification link in your email to log in.
-          </Text>
+          </MyText>
           <TouchableOpacity
             style={styles.verificationButton}
             onPress={() => router.replace("/(auth)/login")}
           >
-            <Text style={styles.buttonText}>return to login</Text>
+            <MySemiBoldText style={styles.buttonText}>return to login</MySemiBoldText>
           </TouchableOpacity>
         </View>
       </View>
@@ -74,14 +78,14 @@ export default function SignupScreen() {
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.logo}>sign up</Text>
-            <Text style={styles.tagline}>your people are waiting!</Text>
+            <MyHeading style={styles.logo}>sign up</MyHeading>
+            <MyText style={styles.tagline}>your people are waiting!</MyText>
           </View>
 
           <View style={styles.form}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>name</Text>
-              <TextInput
+              <MyText style={styles.label}>name</MyText>
+              <MyTextInput
                 style={styles.input}
                 value={name}
                 onChangeText={setName}
@@ -92,8 +96,8 @@ export default function SignupScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>email</Text>
-              <TextInput
+              <MyText style={styles.label}>email</MyText>
+              <MyTextInput
                 style={styles.input}
                 value={email}
                 onChangeText={setEmail}
@@ -106,8 +110,8 @@ export default function SignupScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>password</Text>
-              <TextInput
+              <MyText style={styles.label}>password</MyText>
+              <MyTextInput
                 style={styles.input}
                 value={password}
                 onChangeText={setPassword}
@@ -119,8 +123,8 @@ export default function SignupScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>confirm password</Text>
-              <TextInput
+              <MyText style={styles.label}>confirm password</MyText>
+              <MyTextInput
                 style={styles.input}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -136,14 +140,14 @@ export default function SignupScreen() {
               onPress={handleSignup}
               disabled={loading || !isFormValid}
             >
-              <Text style={styles.buttonText}>{loading ? "creating account..." : "join cactus"}</Text>
+              <MySemiBoldText style={styles.buttonText}>{loading ? "creating account..." : "join cactus"}</MySemiBoldText>
             </TouchableOpacity>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
+              <MyText style={styles.footerText}>Already have an account? </MyText>
               <Link href="/login" asChild>
                 <TouchableOpacity>
-                  <Text style={styles.link}>Log in</Text>
+                  <MySemiBoldText style={styles.link}>Log in</MySemiBoldText>
                 </TouchableOpacity>
               </Link>
             </View>

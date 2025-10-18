@@ -9,10 +9,10 @@ import {
 	Pressable,
 	ScrollView,
 	StyleSheet,
-	Text,
 	TouchableOpacity,
 	View,
 } from "react-native";
+import MyText from "@/components/MyText";
 
 interface ReactionsProps {
 	reactionIds: number[];
@@ -313,15 +313,15 @@ export default function Reactions({
 						]}
 						onPress={() => handleAddReaction(grouped.emoji)}
 					>
-						<Text style={styles.reactionEmoji}>{grouped.emoji}</Text>
-						<Text
+						<MyText style={styles.reactionEmoji}>{grouped.emoji}</MyText>
+						<MyText
 							style={[
 								styles.reactionCount,
 								hasUserReacted(grouped.userIds) && styles.reactionCountActive,
 							]}
 						>
 							{grouped.count}
-						</Text>
+						</MyText>
 					</TouchableOpacity>
 				))}
 
@@ -333,7 +333,7 @@ export default function Reactions({
 					{adding ? (
 						<ActivityIndicator size="small" color="#999999" />
 					) : (
-						<Text style={styles.addReactionText}>+</Text>
+						<MyText style={styles.addReactionText}>+</MyText>
 					)}
 				</TouchableOpacity>
 			</View>
@@ -360,7 +360,7 @@ export default function Reactions({
 									onPress={() => handleAddReaction(emoji)}
 									disabled={adding}
 								>
-									<Text style={styles.pickerEmojiText}>{emoji}</Text>
+									<MyText style={styles.pickerEmojiText}>{emoji}</MyText>
 								</TouchableOpacity>
 							))}
 						</ScrollView>

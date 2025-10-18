@@ -5,8 +5,12 @@ import { supabase } from "@/lib/supabase";
 import { Update } from "@/types/database";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Modal, ScrollView, StyleSheet,  TouchableOpacity, View } from "react-native";
 import Gallery from 'react-native-awesome-gallery';
+import MyText from "@/components/MyText";
+import MyTextInput from "@/components/MyTextInput";
+import MyHeading from "@/components/MyHeading";
+import MyBoldText from "@/components/MyBoldText";
 
 const PAGE_SIZE = 20;
 
@@ -333,20 +337,20 @@ export default function FeedScreen() {
       {isUnread(item) && <View style={styles.unreadDot} />}
       <View style={styles.updateRow}>
         <View style={[styles.avatar, { backgroundColor: item.user_avatar_color || '#E0E0E0' }]}>
-          <Text style={styles.avatarText}>{item.user_name?.[0]?.toUpperCase() || "U"}</Text>
+          <MyText style={styles.avatarText}>{item.user_name?.[0]?.toUpperCase() || "U"}</MyText>
         </View>
         <View style={styles.updateContentWrapper}>
           <View style={styles.updateHeader}>
-            <Text style={styles.userName}>
-              <Text style={styles.userNameBold}>{getFirstName(item.user_name || 'Unknown')}</Text>
-              <Text style={styles.userNameNormal}> in </Text>
-              <Text style={styles.groupNameBold}>
+            <MyText style={styles.userName}>
+              <MyBoldText style={styles.userNameBold}>{getFirstName(item.user_name || 'Unknown')}</MyBoldText>
+              <MyText style={styles.userNameNormal}> in </MyText>
+              <MyBoldText style={styles.groupNameBold}>
                 {item.group_emoji ? `${item.group_emoji} ` : ''}{item.group_name}
-              </Text>
-            </Text>
-            <Text style={styles.timestamp}>{formatTimeAgo(item.created_at)}</Text>
+              </MyBoldText>
+            </MyText>
+            <MyText style={styles.timestamp}>{formatTimeAgo(item.created_at)}</MyText>
           </View>
-          <Text style={styles.updateContent}>{item.content}</Text>
+          <MyText style={styles.updateContent}>{item.content}</MyText>
           {item.media && item.media.length > 0 && (
             <PhotoGallery
               photoPaths={item.media}
@@ -366,9 +370,9 @@ export default function FeedScreen() {
               />
             </View>
             {item.comment_count !== undefined && (
-              <Text style={styles.commentCount}>
+              <MyText style={styles.commentCount}>
                 {item.comment_count} {item.comment_count === 1 ? 'comment' : 'comments'}
-              </Text>
+              </MyText>
             )}
           </View>
         </View>
@@ -380,7 +384,7 @@ export default function FeedScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>cactus</Text>
+          <MyHeading style={styles.title}>cactus</MyHeading>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4A7C59" />
@@ -392,7 +396,7 @@ export default function FeedScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>cactus</Text>
+        <MyHeading style={styles.title}>cactus</MyHeading>
       </View>
 
       <Modal
@@ -406,7 +410,7 @@ export default function FeedScreen() {
             style={styles.closeButton}
             onPress={() => setSelectedPhoto(null)}
           >
-            <Text style={styles.closeButtonText}>✕</Text>
+            <MyText style={styles.closeButtonText}>✕</MyText>
           </TouchableOpacity>
           {selectedPhoto && galleryImages.length > 0 && (
             <Gallery
@@ -433,13 +437,13 @@ export default function FeedScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             {hasGroups ? (
-              <Text style={styles.emptyStateText}>all quiet on the western front</Text>
+              <MyText style={styles.emptyStateText}>all quiet on the western front</MyText>
             ) : (
               <TouchableOpacity
                 style={styles.createGroupButton}
                 onPress={() => router.push("/(tabs)/groups")}
               >
-                <Text style={styles.createGroupButtonText}>+ create a group</Text>
+                <MyText style={styles.createGroupButtonText}>+ create a group</MyText>
               </TouchableOpacity>
             )}
           </View>
@@ -549,13 +553,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userNameBold: {
-    fontWeight: "600",
+    fontWeight: "700",
   },
   userNameNormal: {
     fontWeight: "400",
   },
   groupNameBold: {
-    fontWeight: "600",
+    fontWeight: "700",
   },
   unreadDot: {
     position: "absolute",

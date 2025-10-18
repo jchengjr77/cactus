@@ -3,7 +3,8 @@ import { Group, Update } from "@/types/database";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, ScrollView, StyleSheet,  TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Modal, Pressable, ScrollView, StyleSheet,  TouchableOpacity, View } from "react-native";
+import Gallery from 'react-native-awesome-gallery';
 import { Colors } from "@/constants/Colors";
 import Reactions from "@/components/Reactions";
 import MyText from "@/components/MyText";
@@ -19,6 +20,113 @@ interface UpdateWithUser extends Update {
 
 const PAGE_SIZE = 20;
 
+// Image cache to store loaded images
+const imageCache = new Map<string, string>();
+
+// Component that manages gallery for an update
+function PhotoGallery({
+  photoPaths,
+  onImagePress
+}: {
+  photoPaths: string[];
+  onImagePress: (images: string[], index: number) => void;
+}) {
+  const [imageUrls, setImageUrls] = useState<(string | null)[]>(
+    new Array(photoPaths.length).fill(null)
+  );
+
+  useEffect(() => {
+    loadAllImages();
+  }, [photoPaths]);
+
+  const loadAllImages = async () => {
+    const urls = await Promise.all(
+      photoPaths.map(async (photoPath) => {
+        // Check if image is already in cache
+        if (imageCache.has(photoPath)) {
+          return imageCache.get(photoPath)!;
+        }
+
+        try {
+          const { data, error } = await supabase.storage
+            .from('updates_media')
+            .download(photoPath);
+
+          if (error || !data) {
+            console.error('Error downloading photo:', error);
+            return null;
+          }
+
+          const imageUrl = await new Promise<string | null>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(data);
+          });
+
+          // Store in cache if successfully loaded
+          if (imageUrl) {
+            imageCache.set(photoPath, imageUrl);
+          }
+
+          return imageUrl;
+        } catch (error) {
+          console.error('Error loading photo:', error);
+          return null;
+        }
+      })
+    );
+    setImageUrls(urls);
+  };
+
+  const handleImagePress = (index: number) => {
+    const loadedImages = imageUrls.filter((url): url is string => url !== null);
+    if (loadedImages.length > 0) {
+      onImagePress(loadedImages, index);
+    }
+  };
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.photosContainer}
+      onStartShouldSetResponder={() => true}
+    >
+      {photoPaths.map((photoPath, index) => {
+        const imageUrl = imageUrls[index];
+
+        if (imageUrl === null) {
+          // Still loading this specific image
+          return (
+            <View
+              key={index}
+              style={[styles.photoThumbnail, { justifyContent: 'center', alignItems: 'center', marginRight: 8 }]}
+            >
+              <ActivityIndicator size="small" color={Colors.brandGreen} />
+            </View>
+          );
+        }
+
+        return (
+          <TouchableOpacity
+            key={index}
+            onPress={() => handleImagePress(index)}
+            activeOpacity={0.9}
+            style={{ marginRight: 8 }}
+          >
+            <Image
+              source={{ uri: imageUrl }}
+              style={styles.photoThumbnail}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
 export default function GroupBoardScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
@@ -30,6 +138,9 @@ export default function GroupBoardScreen() {
   const [authors, setAuthors] = useState<{ id: number; name: string }[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [galleryInitialIndex, setGalleryInitialIndex] = useState(0);
 
   useEffect(() => {
     if (id) {
@@ -126,6 +237,7 @@ export default function GroupBoardScreen() {
         read_by: item.read_by || [],
         comments: item.comments || [],
         reactions: item.reactions || [],
+        media: item.media || [],
         media_url: item.media_url,
         media_type: item.media_type,
         user_name: item.users?.name || 'Unknown',
@@ -170,7 +282,7 @@ export default function GroupBoardScreen() {
   const renderUpdate = ({ item }: { item: UpdateWithUser }) => (
     <TouchableOpacity
       style={styles.updateCard}
-      onPress={() => router.push(`/update/${item.id}`)}
+      onPress={() => router.replace(`/update/${item.id}`)}
     >
       <View style={styles.updateRow}>
         <View style={[styles.avatar, { backgroundColor: item.user_avatar_color || '#E0E0E0' }]}>
@@ -182,6 +294,16 @@ export default function GroupBoardScreen() {
             <MyText style={styles.timestamp}>{formatTimeAgo(item.created_at)}</MyText>
           </View>
           <MyText style={styles.updateContent}>{item.content}</MyText>
+          {item.media && item.media.length > 0 && (
+            <PhotoGallery
+              photoPaths={item.media}
+              onImagePress={(images, index) => {
+                setGalleryImages(images);
+                setGalleryInitialIndex(index);
+                setSelectedPhoto(images[0]); // Just to trigger modal open
+              }}
+            />
+          )}
           <View style={styles.bottomRow}>
             <View onStartShouldSetResponder={() => true} style={styles.reactionsWrapper}>
               <Reactions
@@ -214,6 +336,30 @@ export default function GroupBoardScreen() {
 
   return (
     <View style={styles.container}>
+      <Modal
+        visible={selectedPhoto !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSelectedPhoto(null)}
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setSelectedPhoto(null)}
+          >
+            <MyText style={styles.closeButtonText}>✕</MyText>
+          </TouchableOpacity>
+          {selectedPhoto && galleryImages.length > 0 && (
+            <Gallery
+              data={galleryImages}
+              initialIndex={galleryInitialIndex}
+              onSwipeToClose={() => setSelectedPhoto(null)}
+              onTap={() => setSelectedPhoto(null)}
+            />
+          )}
+        </View>
+      </Modal>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <MyText style={styles.backButtonText}>←</MyText>
@@ -526,5 +672,36 @@ const styles = StyleSheet.create({
   footerLoader: {
     paddingVertical: 20,
     alignItems: "center",
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    fontSize: 24,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  photosContainer: {
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  photoThumbnail: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: '#F5F5F5',
   },
 });

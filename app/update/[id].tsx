@@ -511,7 +511,7 @@ export default function UpdateDetailsScreen() {
 					{update.group_id && (
 						<TouchableOpacity
 							style={styles.groupNameButton}
-							onPress={() => router.push(`/group/${update.group_id}`)}
+							onPress={() => router.replace(`/group/${update.group_id}`)}
 						>
 							<MyBoldText style={styles.groupNameText}>
 								{update.group_emoji ? `${update.group_emoji} ` : ''}{update.group_name}

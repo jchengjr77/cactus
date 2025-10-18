@@ -424,8 +424,8 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		color: "#999999",
 		fontWeight: "600",
-		lineHeight: 16,
 		textAlign: "center",
+		includeFontPadding: false,
 	},
 	modalOverlay: {
 		flex: 1,

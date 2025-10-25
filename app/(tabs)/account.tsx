@@ -23,7 +23,7 @@ export default function AccountScreen() {
     groupCount: 0,
     updateCount: 0,
     consistency: 0,
-    totalTab: 0,
+    points: 0,
   });
 
   useEffect(() => {
@@ -76,13 +76,8 @@ export default function AccountScreen() {
 
       const updateCount = updatesData?.length || 0;
 
-      // Fetch total penalties (tab)
-      const { data: penaltiesData, error: penaltiesError } = await supabase
-        .from('penalties')
-        .select('stake_amount')
-        .eq('user', userIdParam);
-
-      const totalTab = penaltiesData?.reduce((sum, penalty) => sum + (penalty.stake_amount || 0), 0) || 0;
+      // Calculate points (1 point per update)
+      const points = updateCount;
 
       // Calculate consistency (placeholder for now - can be enhanced later)
       const consistency = updateCount > 0 ? Math.min(100, Math.round((updateCount / (groupCount * 7)) * 100)) : 0;
@@ -91,7 +86,7 @@ export default function AccountScreen() {
         groupCount,
         updateCount,
         consistency,
-        totalTab,
+        points,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -149,8 +144,8 @@ export default function AccountScreen() {
                   <MyText style={styles.statLabel}>consistency</MyText>
                 </View>
                 <View style={styles.statCard}>
-                  <MyBoldText style={styles.statValue}>${stats.totalTab}</MyBoldText>
-                  <MyText style={styles.statLabel}>total tab</MyText>
+                  <MyBoldText style={styles.statValue}>{stats.points}</MyBoldText>
+                  <MyText style={styles.statLabel}>points</MyText>
                 </View>
               </View>
             </View>

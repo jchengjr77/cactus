@@ -1,17 +1,16 @@
+import MyBoldText from "@/components/MyBoldText";
+import MyHeading from "@/components/MyHeading";
+import MySemiBoldText from "@/components/MySemiBoldText";
+import MyText from "@/components/MyText";
+import Reactions from "@/components/Reactions";
+import { Colors } from "@/constants/Colors";
 import { supabase } from "@/lib/supabase";
 import { Group, Update } from "@/types/database";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Image, Modal, Pressable, ScrollView, StyleSheet,  TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import Gallery from 'react-native-awesome-gallery';
-import { Colors } from "@/constants/Colors";
-import Reactions from "@/components/Reactions";
-import MyText from "@/components/MyText";
-import MyTextInput from "@/components/MyTextInput";
-import MyHeading from "@/components/MyHeading";
-import MyBoldText from "@/components/MyBoldText";
-import MySemiBoldText from "@/components/MySemiBoldText";
 
 interface UpdateWithUser extends Update {
   user_name: string;
@@ -295,14 +294,19 @@ export default function GroupBoardScreen() {
           </View>
           <MyText style={styles.updateContent}>{item.content}</MyText>
           {item.media && item.media.length > 0 && (
-            <PhotoGallery
-              photoPaths={item.media}
-              onImagePress={(images, index) => {
-                setGalleryImages(images);
-                setGalleryInitialIndex(index);
-                setSelectedPhoto(images[0]); // Just to trigger modal open
-              }}
-            />
+            <>
+              <PhotoGallery
+                photoPaths={item.media}
+                onImagePress={(images, index) => {
+                  setGalleryImages(images);
+                  setGalleryInitialIndex(index);
+                  setSelectedPhoto(images[0]); // Just to trigger modal open
+                }}
+              />
+              <MyText style={styles.mediaExpiration}>
+                {getMediaExpirationText(item.created_at)}
+              </MyText>
+            </>
           )}
           <View style={styles.bottomRow}>
             <View onStartShouldSetResponder={() => true} style={styles.reactionsWrapper}>
@@ -387,10 +391,10 @@ export default function GroupBoardScreen() {
                 {group.cadence_hrs < 24
                   ? `Every ${group.cadence_hrs}h`
                   : group.cadence_hrs === 24
-                  ? "Daily"
-                  : group.cadence_hrs === 168
-                  ? "Weekly"
-                  : `Every ${Math.floor(group.cadence_hrs / 24)}d`}
+                    ? "Daily"
+                    : group.cadence_hrs === 168
+                      ? "Weekly"
+                      : `Every ${Math.floor(group.cadence_hrs / 24)}d`}
               </MyText>
             </View>
             <View style={styles.infoDivider} />
@@ -468,6 +472,24 @@ function formatTimeAgo(dateString: string): string {
   if (hours > 0) return `${hours}h ago`;
   if (minutes > 0) return `${minutes}m ago`;
   return "just now";
+}
+
+function getMediaExpirationText(createdAt: string): string {
+  const created = new Date(createdAt);
+  const expirationDate = new Date(created);
+  expirationDate.setDate(expirationDate.getDate() + 7);
+
+  const now = new Date();
+  const timeUntilExpiration = expirationDate.getTime() - now.getTime();
+  const daysLeft = Math.ceil(timeUntilExpiration / (1000 * 60 * 60 * 24));
+
+  if (daysLeft <= 0) {
+    return "Media expired";
+  } else if (daysLeft === 1) {
+    return "Lasts 1 more day";
+  } else {
+    return `Lasts ${daysLeft} more days`;
+  }
 }
 
 const styles = StyleSheet.create({
@@ -703,5 +725,12 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 8,
     backgroundColor: '#F5F5F5',
+  },
+  mediaExpiration: {
+    fontSize: 12,
+    color: "#999999",
+    fontStyle: "italic",
+    marginTop: 8,
+    marginLeft: 4,
   },
 });

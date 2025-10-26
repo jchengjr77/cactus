@@ -1,7 +1,13 @@
+import MyBoldText from "@/components/MyBoldText";
+import MySemiBoldText from "@/components/MySemiBoldText";
+import MyText from "@/components/MyText";
+import MyTextInput from "@/components/MyTextInput";
+import Reactions from "@/components/Reactions";
 import { Colors } from "@/constants/Colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Comment, Update } from "@/types/database";
+import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -19,13 +25,6 @@ import {
 	View,
 } from "react-native";
 import Gallery from 'react-native-awesome-gallery';
-import Reactions from "@/components/Reactions";
-import { MaterialIcons } from '@expo/vector-icons';
-import MyText from "@/components/MyText";
-import MyTextInput from "@/components/MyTextInput";
-import MyHeading from "@/components/MyHeading";
-import MyBoldText from "@/components/MyBoldText";
-import MySemiBoldText from "@/components/MySemiBoldText";
 
 // Component that manages gallery for an update
 function PhotoGallery({
@@ -670,14 +669,19 @@ export default function UpdateDetailsScreen() {
 										</View>
 										<MyText style={styles.updateContent}>{update.content}</MyText>
 										{update.media && update.media.length > 0 && (
-											<PhotoGallery
-												photoPaths={update.media}
-												onImagePress={(images, index) => {
-													setGalleryImages(images);
-													setGalleryInitialIndex(index);
-													setSelectedPhoto(images[0]); // Just to trigger modal open
-												}}
-											/>
+											<>
+												<PhotoGallery
+													photoPaths={update.media}
+													onImagePress={(images, index) => {
+														setGalleryImages(images);
+														setGalleryInitialIndex(index);
+														setSelectedPhoto(images[0]); // Just to trigger modal open
+													}}
+												/>
+												<MyText style={styles.mediaExpiration}>
+													{getMediaExpirationText(update.created_at)}
+												</MyText>
+											</>
 										)}
 										<View style={styles.bottomSection}>
 											<View style={styles.reactionsContainer}>
@@ -741,7 +745,7 @@ export default function UpdateDetailsScreen() {
 						style={[
 							styles.submitButtonText,
 							(!commentInput.trim() || submitting) &&
-								styles.submitButtonTextDisabled,
+							styles.submitButtonTextDisabled,
 						]}
 					>
 						{submitting ? "..." : "post"}
@@ -765,6 +769,24 @@ function formatTimeAgo(dateString: string): string {
 	if (hours > 0) return `${hours}h ago`;
 	if (minutes > 0) return `${minutes}m ago`;
 	return "just now";
+}
+
+function getMediaExpirationText(createdAt: string): string {
+	const created = new Date(createdAt);
+	const expirationDate = new Date(created);
+	expirationDate.setDate(expirationDate.getDate() + 7);
+
+	const now = new Date();
+	const timeUntilExpiration = expirationDate.getTime() - now.getTime();
+	const daysLeft = Math.ceil(timeUntilExpiration / (1000 * 60 * 60 * 24));
+
+	if (daysLeft <= 0) {
+		return "Media expired";
+	} else if (daysLeft === 1) {
+		return "Lasts 1 more day";
+	} else {
+		return `Lasts ${daysLeft} more days`;
+	}
 }
 
 const styles = StyleSheet.create({
@@ -1099,5 +1121,12 @@ const styles = StyleSheet.create({
 	deleteButtonTextDisabled: {
 		color: "#FFFFFF",
 		opacity: 0.7,
+	},
+	mediaExpiration: {
+		fontSize: 12,
+		color: "#999999",
+		fontStyle: "italic",
+		marginTop: 8,
+		marginLeft: 4,
 	},
 });

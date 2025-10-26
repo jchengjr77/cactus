@@ -229,6 +229,16 @@ export default function NewUpdateScreen() {
     }
   };
 
+  const getExpirationDateText = () => {
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + 7);
+
+    const month = expirationDate.toLocaleDateString('en-US', { month: 'short' });
+    const day = expirationDate.getDate();
+
+    return `lasts until ${month} ${day}`;
+  };
+
   const canPost = updateText.trim() !== "" && selectedGroup !== null && !posting;
 
   if (loading) {
@@ -337,7 +347,10 @@ export default function NewUpdateScreen() {
               <View style={styles.photoHeader}>
                 <MySemiBoldText style={styles.label}>photos</MySemiBoldText>
                 {selectedPhotos.length > 0 && (
-                  <MyText style={styles.photoCount}>{selectedPhotos.length}/5</MyText>
+                  <>
+                    <MyText style={styles.photoCount}>{selectedPhotos.length}/5</MyText>
+                    <MyText style={styles.expirationNote}>{getExpirationDateText()}</MyText>
+                  </>
                 )}
               </View>
             )
@@ -550,6 +563,11 @@ const styles = StyleSheet.create({
   photoCount: {
     fontSize: 13,
     color: "#999999",
+  },
+  expirationNote: {
+    fontSize: 12,
+    color: "#999999",
+    fontStyle: "italic",
   },
   photoList: {
     flexDirection: "row",

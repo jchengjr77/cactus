@@ -84,7 +84,7 @@ export default function GroupInviteScreen() {
 			// Get current group data
 			const { data: groupData } = await supabase
 				.from('groups')
-				.select('members, emails_invited')
+				.select('members, emails_invited, cadence_hrs')
 				.eq('id', notification.data.group_id)
 				.single();
 
@@ -101,13 +101,37 @@ export default function GroupInviteScreen() {
 				// Mark group as active if all invited users have accepted
 				const isActive = updatedEmailsInvited.length === 0;
 
+				// If group is becoming active, set the initial updates_due
+				const updateData: any = {
+					members: [...currentMembers, userData.id],
+					emails_invited: updatedEmailsInvited,
+					is_active: isActive
+				};
+
+				if (isActive && groupData.cadence_hrs) {
+					// Round current time to nearest hour
+					const now = new Date();
+					const minutes = now.getMinutes();
+					const roundedTime = new Date(now);
+
+					if (minutes < 30) {
+						// Round down to current hour
+						roundedTime.setMinutes(0, 0, 0);
+					} else {
+						// Round up to next hour
+						roundedTime.setMinutes(0, 0, 0);
+						roundedTime.setHours(roundedTime.getHours() + 1);
+					}
+
+					// Set first update deadline to cadence_hrs from rounded time
+					const firstDeadline = new Date(roundedTime);
+					firstDeadline.setHours(firstDeadline.getHours() + groupData.cadence_hrs);
+					updateData.updates_due = firstDeadline.toISOString();
+				}
+
 				const { error: updateError } = await supabase
 					.from('groups')
-					.update({
-						members: [...currentMembers, userData.id],
-						emails_invited: updatedEmailsInvited,
-						is_active: isActive
-					})
+					.update(updateData)
 					.eq('id', notification.data.group_id);
 
 				if (updateError) {

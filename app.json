@@ -8,8 +8,14 @@
     "scheme": "cactus",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "eas": {
+        "projectId": "clutisavqqhkfgknfixo"
+      }
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.cactus"
     },
     "android": {
       "adaptiveIcon": {

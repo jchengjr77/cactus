@@ -18,6 +18,7 @@ export interface User {
   email: string;
   uuid: string | null;
   avatar_color: string | null;
+  push_token: string | null; // Expo push notification token
 }
 
 export interface Update {
@@ -49,6 +50,7 @@ export type NotificationType =
   | 'new_comment'
   | 'new_reaction'
   | 'update_due'
+  | 'update_reminder' // Reminder 1hr before update window closes
   | 'update_missed_self'
   | 'update_missed_other'
   | 'group_streak'

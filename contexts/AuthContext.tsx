@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { registerForPushNotificationsAsync, savePushToken, removePushToken } from '@/lib/pushNotifications';
+import { User as DbUser } from '@/types/database';
 
 type AuthContextType = {
   session: Session | null;
@@ -20,23 +22,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // Register for push notifications if user is logged in
+      if (session?.user) {
+        await registerPushNotification(session.user.id);
+      }
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // Register for push notifications on sign in
+      if (_event === 'SIGNED_IN' && session?.user) {
+        await registerPushNotification(session.user.id);
+      }
+      // Remove push token on sign out
+      else if (_event === 'SIGNED_OUT') {
+        // Token removal handled in signOut function
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const registerPushNotification = async (authUserId: string) => {
+    try {
+      // Get the database user ID from the auth UUID
+      const { data: dbUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('uuid', authUserId)
+        .single();
+
+      if (dbUser) {
+        const pushToken = await registerForPushNotificationsAsync();
+        if (pushToken) {
+          await savePushToken(dbUser.id, pushToken);
+        }
+      }
+    } catch (error) {
+      console.error('Error registering push notification:', error);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -78,6 +114,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    // Remove push token before signing out
+    if (user) {
+      try {
+        const { data: dbUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('uuid', user.id)
+          .single();
+
+        if (dbUser) {
+          await removePushToken(dbUser.id);
+        }
+      } catch (error) {
+        console.error('Error removing push token:', error);
+      }
+    }
     await supabase.auth.signOut();
   };
 
